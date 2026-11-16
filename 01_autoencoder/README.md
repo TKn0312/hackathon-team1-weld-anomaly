@@ -82,6 +82,17 @@ The encoder still "sees" the defect at every size; the decoder never draws it:
 
 ![Encoder vs decoder](figures/encoder_vs_decoder.png)
 
+### The latent space
+
+Each tile's 32-number code, squeezed into 2D with UMAP (validation and test tiles, 5,807 dots):
+
+![Latent space](figures/latent_space.png)
+
+- **Sound welds group together:** 84% of a sound tile's nearest neighbours in the code are also sound (28% by chance).
+- **The defect types don't separate from each other:** 44–55% (19–28% by chance). The model was never asked to tell them apart.
+- **The code mostly describes how the X-ray looks:** 60% of neighbours come from the same weld (14% by chance). It stores brightness and grain, which is what's needed to redraw a sound weld; the defect is what it leaves out.
+- **Detection comes from the reconstruction error, not from the position on the map.**
+
 ### Test set (4 unseen welds), setup D
 
 - **ROC AUC 0.999**, precision 0.994, recall 0.984 at the 95% threshold
