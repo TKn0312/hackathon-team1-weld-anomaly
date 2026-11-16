@@ -28,3 +28,6 @@ Thumbs.db
 .env
 .dev.vars
 kaggle.json
+
+# example tiles from RIAWELC: the dataset must not be re-uploaded
+**/model_app/examples/
