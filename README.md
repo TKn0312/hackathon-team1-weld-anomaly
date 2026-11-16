@@ -43,12 +43,19 @@ Details, comparison table and figures: [01_autoencoder/README.md](01_autoencoder
 
 | | |
 |---|---|
-| **Tools** | ... |
-| **Why** | ... |
-| **Where** | Monday: ... Tuesday: ... Wednesday: ... Thursday: ... |
-| **How** | ... |
+| **Tools** | Claude Code (Anthropic, Claude Opus 5.5) as a coding assistant in VS Code. |
+| **Why** | To spend the hackathon week on decisions and understanding rather than on boilerplate: the assistant wrote and ran code, and we directed the work, questioned it and decided. |
+| **Where** | **Monday:** we used it to implement the steps we defined: repository setup, data cleaning, the split, the training and comparison code, the figures, code comments and documentation. **Tuesday:** ... **Wednesday:** ... **Thursday:** ... |
+| **How** | **Our decisions:** <br>• **Look at the data before modelling.** We asked whether it needed cleaning, then had the duplicates removed and examples of every class shown. <br>• **Framing the problem** as a screening tool with **low / check / high** risk levels for an inspector, not an accept/reject verdict. <br>• **Comparing models instead of assuming:** we wanted the best fit, so instead of picking 128 px we had several setups (resolution, code size, dense vs convolutional) trained and compared on validation. <br>• **Checking the plan against the teacher's notebook** and its checklist. <br>• **Designing the pipeline figure** (workflow plus mechanism in one image) and the **encoder vs decoder comparison** of the same tile, to explain how the model works. <br>• **Choosing what to explore next** from the brainstormed experiments. <br>**The assistant's role:** it wrote and ran the code, proposed implementation options (e.g. the specific setups and thresholds) and explained each step. <br>**How we checked it:** we questioned the results and had every step explained (what the encoder and decoder do, what a "sound weld" means, why 64 px won) before moving on. All numbers come from the notebook, which runs from top to bottom with fixed seeds. |
 
-**Lessons learned:** ...
+**Lessons learned:**
+- **Looking at the data first paid off.** Every test image was also in the training set, and tiles of the same weld were spread over all splits. We only found this because we explored the data before training; otherwise the scores would have been meaningless.
+- **Questioning results catches mistakes.** Asking "why?" exposed several issues, all of them fixed:
+  - results that changed between runs (a missing random seed)
+  - an ONNX check that failed (GPU vs CPU precision)
+  - example tiles that happened to be rare misses
+- **Comparing beats assuming.** We expected 128 px to win; the comparison showed 64 px was better, because it averages away the X-ray grain.
+- **AI writes code fast, but people make the decisions.** How many false alarms an inspector should accept, or what the tool may and may not claim, are human decisions.
 
 ## License
 
