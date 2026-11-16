@@ -6,8 +6,8 @@ venv/
 .ipynb_checkpoints/
 
 # data: downloaded by the notebook, not committed
-data/*
-!data/.gitkeep
+**/data/*
+!**/data/.gitkeep
 
 # model files: on Hugging Face, not on GitHub
 *.onnx
