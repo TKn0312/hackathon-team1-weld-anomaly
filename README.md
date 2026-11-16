@@ -12,7 +12,7 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 
 | Part | Link |
 |---|---|
-| Model on Hugging Face | `iaac-maai/hackathon-team1-weld-anomaly-ae` (Monday) |
+| Model on Hugging Face | [iaac-maai/hackathon-team1-weld-anomaly-ae](https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae) |
 | Model server (Render) | Tuesday |
 | App (Cloudflare Pages) | Wednesday |
 | Impulse talk slides | [impulse/LINK.md](impulse/LINK.md) |
@@ -21,7 +21,7 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 
 | Day | Folder | Status |
 |---|---|---|
-| Mon 16 Nov | [01_autoencoder/](01_autoencoder/) | model trained, compared and exported; Hugging Face upload and slides pending |
+| Mon 16 Nov | [01_autoencoder/](01_autoencoder/) | model trained, compared and published on Hugging Face; slides pending |
 | Tue 17 Nov | `02_model_server/` | |
 | Wed 18 Nov | `03_app/` | |
 | Thu 19 Nov | `04_final/` | |
