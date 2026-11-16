@@ -14,7 +14,11 @@ A weld inspector uploads X-ray tiles of steel welds. The app flags suspicious ar
 |---|---|
 | **Name** | RIAWELC weld radiographs |
 | **Source** | https://github.com/stefyste/RIAWELC |
-| **Size** | 24,407 greyscale PNG patches, 224 × 224 px; ... used |
+| **Size** | 24,407 greyscale PNG tiles of 227 × 227 px (the dataset README says 224; the files are 227), cut from X-rays of 29 welds |
+| **Classes** | no defect (`NoDifetto`), porosity (`Difetto2`), crack (`Difetto1`), lack of penetration (`Difetto4`): mapping confirmed visually |
+| **Cleaning** | 2,514 duplicates removed (every original test image was also in training) → **21,893 unique tiles** |
+| **Split** | New split **by weld**, so no weld appears in two splits: train 20 welds, validation 5, test 4 |
+| **Used** | Training: the **3,783 no-defect tiles** of the training welds only. Validation: 2,788 tiles (747 sound + 2,041 defects). Test: 3,019 tiles (866 sound + 2,153 defects) |
 | **Licence** | No formal licence; free with citation (see the root README). Not redistributed. |
 
 ## How to run
