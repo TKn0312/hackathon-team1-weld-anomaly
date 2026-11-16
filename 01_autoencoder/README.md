@@ -114,11 +114,11 @@ The exported ONNX model (2.8 MB) gives the same scores as PyTorch, and the thres
 
 ## Model on Hugging Face
 
-https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae
+https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae (upload pending: until then the model files are created by running the notebook)
 
 ## Slides
 
-[slides/](slides/)
+[slides/](slides/): the three slides for Tuesday (dataset and setups, one figure, the app idea) are in preparation.
 
 ## Limitations
 
