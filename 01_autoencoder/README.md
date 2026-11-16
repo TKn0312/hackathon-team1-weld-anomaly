@@ -122,4 +122,16 @@ https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae
 
 ## Limitations
 
-- ...
+- **Few welds:** 29 in total, 4 in the test set. The test score (0.999) partly depends on which welds landed there; "about 0.99 on unseen welds" is the fair claim.
+- **One lab, one X-ray setup:** results may not transfer to other equipment or exposure settings.
+- **Tile-level labels:** each tile has one label for the whole tile, so we can check whether a tile is flagged, but not whether the error map points at the right spot.
+- **Texture, not only defects:** the model rebuilds every tile as a smooth grey gradient. On very grainy X-rays part of the score comes from the grain.
+- **Noisy training curves:** setups B and C stopped early (epochs 5–6) and may be slightly under-rated.
+- **Screening aid, not a verdict:** acceptance under welding standards (e.g. ISO 5817) depends on defect size and plate thickness, which the dataset does not contain. A qualified inspector decides.
+
+## Next experiments
+
+From section 14 of the notebook, the top three:
+1. **Repeat with other seeds and weld splits** (cross-validation by weld): is D really better than A?
+2. **A better anomaly score:** the peak of the error map instead of its average, so thin cracks are not diluted.
+3. **Error analysis:** look at the 11 missed defects and the false alarms.
