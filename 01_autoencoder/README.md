@@ -134,7 +134,7 @@ onnx_path = hf_hub_download("iaac-maai/hackathon-team1-weld-anomaly-ae", "anomal
 
 ## Slides
 
-[slides/weld_anomaly_tuesday_slides.pdf](slides/weld_anomaly_tuesday_slides.pdf): the Tuesday deck in one PDF, 5 pages (cover, dataset and setups, the full comparison table, what we see, the app idea).
+[slides/weld_anomaly_tuesday_slides.pdf](slides/weld_anomaly_tuesday_slides.pdf): the Tuesday deck in one PDF, 6 pages (cover, dataset and setups, the full comparison table, what we see, the latent space, the app idea).
 
 ## Limitations
 
