@@ -114,7 +114,12 @@ The exported ONNX model (2.8 MB) gives the same scores as PyTorch, and the thres
 
 ## Model on Hugging Face
 
-https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae (upload pending: until then the model files are created by running the notebook)
+**[iaac-maai/hackathon-team1-weld-anomaly-ae](https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae)**: `anomaly_ae.onnx`, `anomaly_ae.pt`, `anomaly_ae_config.json` and a model card with usage code. The card's source is [model_app/MODEL_CARD.md](model_app/MODEL_CARD.md).
+
+```python
+from huggingface_hub import hf_hub_download
+onnx_path = hf_hub_download("iaac-maai/hackathon-team1-weld-anomaly-ae", "anomaly_ae.onnx")
+```
 
 ## Slides
 
