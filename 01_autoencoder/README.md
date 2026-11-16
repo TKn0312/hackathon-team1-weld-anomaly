@@ -123,7 +123,7 @@ onnx_path = hf_hub_download("iaac-maai/hackathon-team1-weld-anomaly-ae", "anomal
 
 ## Slides
 
-[slides/](slides/): the three slides for Tuesday (dataset and setups, one figure, the app idea) are in preparation.
+[slides/](slides/): the Tuesday deck (cover, dataset and setups, the full comparison table, what we see, the app idea), with speaker notes. Online version to present or export: https://claude.ai/artifact/4pbiHwZwdUymJPP8wXH8ga (private; shared from its Share menu).
 
 ## Limitations
 
