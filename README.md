@@ -4,6 +4,10 @@
 **Course:** AI Methods I – Hackathon (IAAC MaAI 2026/27), 16–20 November 2026
 **Topic:** an autoencoder trained on defect-free weld radiographs flags porosity, cracks and lack of penetration by their reconstruction error, as a quality check for structural steel.
 
+## Getting started
+
+Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Links
 
 | Part | Link |

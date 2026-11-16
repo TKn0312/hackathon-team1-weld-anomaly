@@ -18,6 +18,7 @@
 ```bash
 python -m venv .venv
 .venv\Scripts\activate           # macOS/Linux: source .venv/bin/activate
+pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu130   # NVIDIA GPU; CPU: .../whl/cpu
 pip install -r requirements.txt
 git clone https://github.com/stefyste/RIAWELC data/RIAWELC
 ```

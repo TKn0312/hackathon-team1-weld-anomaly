@@ -1,11 +1,13 @@
 # virtual environments
 .venv/
+env/
 venv/
 
 # Jupyter
 .ipynb_checkpoints/
 
 # data: downloaded by the notebook, not committed
+*.csv
 **/data/*
 !**/data/.gitkeep
 
