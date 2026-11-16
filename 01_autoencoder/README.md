@@ -38,11 +38,33 @@ The notebook writes the model files to `model_app/` (`anomaly_ae.onnx`, `anomaly
 
 ## Setups compared
 
-| Setup | Parameters | Training time | Validation error | Test error | ROC AUC | Precision | Recall |
-|---|---|---|---|---|---|---|---|
-| ... | | | | | | | |
+All setups trained on the same no-defect tiles, with the same split, seed and recipe (Adam, batch 64, random flips, early stopping on validation). Errors are the mean reconstruction error (MSE) of **sound** tiles. ROC AUC measures how well the error separates defects from sound tiles. Precision and recall are on the test set at the 95% threshold (95th percentile of sound validation errors). **The winner was chosen on validation ROC AUC only.**
 
-**Conclusion:** ...
+| Setup | Parameters | Training time | Validation error | Test error | ROC AUC (val / test) | Precision | Recall |
+|---|---|---|---|---|---|---|---|
+| A: Conv AE, 128 px, latent 32 | 1,014,049 | 11 s | 0.00027 | 0.00023 | 0.987 / 0.998 | 1.000 | 0.964 |
+| B: Conv AE, 128 px, latent 128 | 2,587,009 | 6 s | 0.00038 | 0.00031 | 0.986 / 0.999 | 1.000 | 0.967 |
+| C: Dense AE, 128 px, latent 32 | 16,827,424 | 3 s | 0.00035 | 0.00025 | 0.977 / 1.000 | 1.000 | 0.972 |
+| **D: Conv AE, 64 px, latent 32** | **718,369** | **8 s** | **0.00020** | **0.00018** | **0.990 / 0.999** | **0.994** | **0.984** |
+| Baseline: contrast only (no model) | – | – | – | – | 0.946 / 0.936 | 0.926 | 0.879 |
+
+ROC AUC per defect type on validation:
+
+| | Porosity | Crack | Lack of penetration |
+|---|---|---|---|
+| A | 0.992 | 0.980 | 0.997 |
+| B | 0.992 | 0.979 | 0.997 |
+| C | 0.987 | 0.966 | 0.992 |
+| **D** | **0.994** | **0.985** | **0.998** |
+| Baseline | 0.949 | 0.926 | 0.991 |
+
+**Conclusion:** **setup D wins**: the smallest model has the best validation AUC overall and for every defect type, and the best recall.
+- **64 px beats 128 px.** The lower resolution averages away the X-ray grain, which an autoencoder cannot copy anyway, while the defects survive the resize.
+- **A bigger code (B) does not help.** More room in the bottleneck lets the model copy defects too.
+- **The dense model (C) is worst**, with 17× more parameters. It ignores which pixels are neighbours, so it is worse at telling shapes from grain.
+- **Every autoencoder beats the contrast baseline**, most of all on **cracks** (0.985 vs 0.926). The model learns more than "defects are high contrast".
+- **Cracks are the hardest defect** for every setup: thin, faint, few pixels.
+- **Test is easier than validation** (only 4 welds), so the fair claim is **"about 0.99 AUC on unseen welds"**. The gap between A and D is within that uncertainty.
 
 ## Results
 
