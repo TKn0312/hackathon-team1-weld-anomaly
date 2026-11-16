@@ -32,7 +32,9 @@ git clone https://github.com/stefyste/RIAWELC data/RIAWELC
 # then extract data/RIAWELC/Dataset_partitioned/RIAWELC_dataset.part01.rar into data/riawelc_extracted/ (see CONTRIBUTING.md)
 ```
 
-Open `notebook/autoencoder.ipynb` and run all cells. Training ran on ... and took ...
+Open `notebook/autoencoder.ipynb`, select the `.venv` kernel and run all cells. Training ran on an **NVIDIA RTX 5080 Laptop GPU**: 3–12 s per setup, about 2 minutes for the whole notebook. On a CPU it works too, just slower. Results are reproducible: the same seed gives the same numbers on every run.
+
+The notebook writes the model files to `model_app/` (`anomaly_ae.onnx`, `anomaly_ae.pt`, `anomaly_ae_config.json`, example tiles). The `.onnx`/`.pt` files and the example tiles are git-ignored: the model goes to Hugging Face, and the dataset must not be re-uploaded.
 
 ## Setups compared
 
