@@ -1,0 +1,18 @@
+<section id="seeing" class="seeing" data-transition="fade">
+<div class="head">
+<p class="eyebrow">2 · WHAT WE SEE</p>
+<h2>It can only draw sound welds, so defects light up</h2>
+</div>
+<div class="see">
+<div class="see-fig reveal" style="--i:0">
+<img class="errmaps" src="/_blob/1d8f2b2fe45c11d8c543a4fc1d2b7ec0" alt="Eight test tiles, two per class. Rows: input, rebuilt tile, error map. The sound tiles have dark error maps; pores, cracks and lack of penetration light up in the error map and are flagged.">
+<p class="small">Rows: input · rebuilt by the model · error map. Two unseen test tiles per class.</p>
+</div>
+<div class="points">
+<div class="point reveal" style="--i:1"><p class="big">Always smooth</p><p class="txt">The rebuilt tile is a sound weld, whatever goes in.</p></div>
+<div class="point reveal" style="--i:2"><p class="big">Error = where</p><p class="txt">Input minus rebuilt lights up exactly at the defect.</p></div>
+<div class="point reveal" style="--i:3"><p class="big">AUC 0.999</p><p class="txt">On 4 unseen welds: 98% of defects flagged, 1.5% of sound tiles.</p></div>
+</div>
+</div>
+<aside>How to read it: top row is the input tile, middle row is what the model rebuilds, bottom row is the error map. The model only ever learned sound welds, so it always rebuilds a smooth sound-looking tile. The pore, crack or band is missing from the rebuilt tile, so the difference lights up exactly there: that is the heatmap the inspector sees. On the four unseen test welds: ROC AUC 0.999, about 98% of each defect type flagged at the 95% threshold, and only 1.5% of sound tiles. Honest summary: about 0.99 on unseen welds, because the test set has only four welds. Cracks are the hardest defect: thin and faint, they change few pixels.</aside>
+</section>
