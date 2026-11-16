@@ -68,7 +68,49 @@ ROC AUC per defect type on validation:
 
 ## Results
 
-![...](figures/...)
+### The four classes
+
+![One example per class](figures/one_example_per_class.png)
+
+### How the model works
+
+The autoencoder squeezes a 64 × 64 tile into **32 numbers** and rebuilds it. It only ever learned sound welds, so it rebuilds every tile as a sound weld: the defect is missing from the rebuilt tile, and the **error map** (input − rebuilt)² lights up exactly there.
+
+![Pipeline overview](figures/pipeline_overview.png)
+
+The encoder still "sees" the defect at every size; the decoder never draws it:
+
+![Encoder vs decoder](figures/encoder_vs_decoder.png)
+
+### Test set (4 unseen welds), setup D
+
+- **ROC AUC 0.999**, precision 0.994, recall 0.984 at the 95% threshold
+- Flagged: **98.6%** of porosity, **97.8%** of cracks, **98.6%** of lack-of-penetration tiles, and only **1.5%** of sound tiles
+
+![Error maps](figures/error_maps_best.png)
+
+### Risk levels: low / check / high
+
+Two thresholds, both chosen on validation:
+- **T_low = 0.000255:** 98% of validation defects score above it. Safety first: a missed crack costs more than a false alarm.
+- **T_high = 0.001442:** only 0.5% of sound validation tiles score above it.
+
+| Test tiles | 🟢 low | 🟠 check | 🔴 high |
+|---|---|---|---|
+| no defect | **90.9%** | 9.1% | 0.0% |
+| porosity | 0.2% | 7.4% | **92.4%** |
+| crack | 0.3% | 14.7% | **84.9%** |
+| lack of penetration | 1.1% | 8.8% | **90.1%** |
+
+Only **11 of 2,153 defect tiles (0.5%)** end up in "low", and **91% of sound tiles** can be skipped.
+
+![Risk levels](figures/risk_levels_test.png)
+
+### What the output means for a user
+
+> *The score says how unlike a sound weld this X-ray tile looks. The risk level says whether an inspector can skip it, should check it, or should check it first, and the error map shows where to look.*
+
+The exported ONNX model (2.8 MB) gives the same scores as PyTorch, and the thresholds are in `model_app/anomaly_ae_config.json`.
 
 ## Model on Hugging Face
 
