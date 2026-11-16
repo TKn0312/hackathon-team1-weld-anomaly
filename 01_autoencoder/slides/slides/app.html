@@ -1,0 +1,20 @@
+<section id="app" data-transition="fade">
+<div class="head">
+<p class="eyebrow">3 · APP IDEA</p>
+<h2>A screening tool for weld inspectors</h2>
+</div>
+<div class="flow reveal" style="--i:0">
+<div class="card"><x-icon name="Users"></x-icon><p class="label">WHO</p><p class="txt">A weld inspector checking structural steel</p></div>
+<x-shape kind="arrow-right"></x-shape>
+<div class="card"><x-icon name="Cloud"></x-icon><p class="label">UPLOADS</p><p class="txt">X-ray tiles of welds</p></div>
+<x-shape kind="arrow-right"></x-shape>
+<div class="card"><x-icon name="Search"></x-icon><p class="label">GETS BACK</p><p class="txt">A risk level and a heatmap of where to look</p></div>
+</div>
+<div class="levels">
+<div class="level reveal" style="--i:1"><div class="lv-bar low"></div><div class="lv-body"><p class="name low">LOW</p><p class="txt">91% of sound tiles: skip</p></div></div>
+<div class="level reveal" style="--i:2"><div class="lv-bar check"></div><div class="lv-body"><p class="name check">CHECK</p><p class="txt">Borderline: a human looks</p></div></div>
+<div class="level reveal" style="--i:3"><div class="lv-bar high"></div><div class="lv-body"><p class="name high">HIGH</p><p class="txt">85–92% of each defect: inspect first</p></div></div>
+</div>
+<p class="verdict reveal" style="--i:4"><b>Only 0.5% of defects end up in “low”.</b> A screening aid, not a verdict: the inspector decides.</p>
+<aside>Who: a weld inspector checking structural steel. What they upload: X-ray tiles of welds. What the model answers: a score, turned into three risk levels, plus the error map as a heatmap of where to look. The two thresholds were chosen on validation data. The low/check boundary is set so that 98% of defects score above it: safety first, because a missed crack costs more than a false alarm. The check/high boundary is set so that only 0.5% of sound tiles reach high. On the unseen test welds, 91% of sound tiles are low and can be skipped, 85 to 92% of each defect type is high, and only 0.5% of defect tiles end up in low. One sentence: the score says how unlike a sound weld the tile looks, the risk level says whether to skip it, check it or check it first, and the heatmap shows where. It does not replace the inspector: acceptance under welding standards depends on defect size and plate thickness, which the model does not measure.</aside>
+</section>
