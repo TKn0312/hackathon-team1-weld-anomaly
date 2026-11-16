@@ -37,7 +37,7 @@ Details, comparison table and figures: [01_autoencoder/README.md](01_autoencoder
 
 ## Data
 
-[RIAWELC](https://github.com/stefyste/RIAWELC): 24,407 greyscale X-ray patches (224 × 224 px) of steel welds in four classes: no defect, porosity, crack, lack of penetration. No formal licence: the data is released freely with a request to cite Totino, Spagnolo and Perri (2023), "RIAWELC: a novel dataset of radiographic images for automatic weld defects classification", and the second paper listed in the dataset README. The images are not redistributed in this repository or on Hugging Face.
+[RIAWELC](https://github.com/stefyste/RIAWELC): 24,407 greyscale X-ray patches (227 × 227 px; the dataset README says 224) of steel welds from 29 radiographs, in four classes: no defect, porosity, crack, lack of penetration. No formal licence: the data is released freely with a request to cite Totino, Spagnolo and Perri (2023), "RIAWELC: a novel dataset of radiographic images for automatic weld defects classification", and the second paper listed in the dataset README. The images are not redistributed in this repository or on Hugging Face.
 
 ## AI usage disclosure
 
