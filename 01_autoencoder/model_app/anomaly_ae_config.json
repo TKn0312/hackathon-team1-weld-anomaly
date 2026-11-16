@@ -1,0 +1,42 @@
+{
+  "model": "ConvAE (convolutional autoencoder)",
+  "setup": "D: Conv AE, 64 px, latent 32",
+  "latent_dim": 32,
+  "image_size": 64,
+  "input": {
+    "name": "image",
+    "shape": [
+      "batch",
+      1,
+      64,
+      64
+    ],
+    "dtype": "float32"
+  },
+  "output": {
+    "name": "reconstruction",
+    "shape": [
+      "batch",
+      1,
+      64,
+      64
+    ]
+  },
+  "preprocessing": "greyscale (PIL mode 'L'), resize to 64x64 with bilinear interpolation, pixels divided by 255 (0-1), shape (1, 1, H, W)",
+  "score": "anomaly score = mean over pixels of (input - reconstruction)^2",
+  "error_map": "(input - reconstruction)^2 per pixel: where the model fails to rebuild the tile",
+  "threshold": 0.0003445311158429831,
+  "threshold_rule": "95th percentile of the score on no_defect validation tiles (about 5% false alarms by design)",
+  "decision": "score > threshold -> flag the tile for inspection",
+  "normal_class": "no_defect",
+  "anomaly_classes_in_test": [
+    "porosity",
+    "crack",
+    "lack_of_penetration"
+  ],
+  "validation_roc_auc": 0.99,
+  "test_roc_auc": 0.999,
+  "test_precision": 0.994,
+  "test_recall": 0.984,
+  "data": "RIAWELC weld radiographs (Totino, Spagnolo and Perri). Tiles of 227x227 px. Not redistributed."
+}
