@@ -2,7 +2,11 @@
 
 ## Use case
 
-...who uses it, what they upload, what the anomaly score means for them...
+A weld inspector uploads X-ray tiles of steel welds. The app flags suspicious areas and ranks each tile **low / check / high** risk, so the inspector reviews the riskiest welds first.
+
+- **How:** a convolutional autoencoder learns what a sound weld looks like from defect-free tiles only. Tiles it cannot reconstruct well (high reconstruction error) are anomalous; the error map shows *where*.
+- **Risk levels:** two thresholds on the anomaly score, chosen on validation data to catch most defects, because a missed crack costs far more than a false alarm.
+- **What it is not:** a certified accept/reject decision. Acceptance under standards such as ISO 5817 depends on defect type, size and plate thickness, which the dataset does not provide. The tool is a screening aid; a qualified inspector decides.
 
 ## Dataset
 
@@ -21,6 +25,7 @@ python -m venv .venv
 pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu130   # NVIDIA GPU; CPU: .../whl/cpu
 pip install -r requirements.txt
 git clone https://github.com/stefyste/RIAWELC data/RIAWELC
+# then extract data/RIAWELC/Dataset_partitioned/RIAWELC_dataset.part01.rar into data/riawelc_extracted/ (see CONTRIBUTING.md)
 ```
 
 Open `notebook/autoencoder.ipynb` and run all cells. Training ran on ... and took ...

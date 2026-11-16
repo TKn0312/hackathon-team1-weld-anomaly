@@ -46,6 +46,14 @@ In VS Code: open a notebook, **Select Kernel → Python Environments → .venv**
 git clone https://github.com/stefyste/RIAWELC 01_autoencoder/data/RIAWELC
 ```
 
+The images are a multi-part RAR archive. Extract `part01.rar` (it pulls in the other parts) into `01_autoencoder/data/riawelc_extracted/`, giving `riawelc_extracted/DB - Copy/{training,validation,testing}/...`:
+
+```bash
+# Windows, WinRAR installed
+"C:\Program Files\WinRAR\UnRAR.exe" x 01_autoencoder\data\RIAWELC\Dataset_partitioned\RIAWELC_dataset.part01.rar 01_autoencoder\data\riawelc_extracted\
+# Windows with 7-Zip, or macOS/Linux: 7z x <same .part01.rar> -o01_autoencoder/data/riawelc_extracted
+```
+
 ## 3. Daily workflow
 
 ```bash
