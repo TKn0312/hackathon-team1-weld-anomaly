@@ -38,5 +38,14 @@
   "test_roc_auc": 0.999,
   "test_precision": 0.994,
   "test_recall": 0.984,
-  "data": "RIAWELC weld radiographs (Totino, Spagnolo and Perri). Tiles of 227x227 px. Not redistributed."
+  "data": "RIAWELC weld radiographs (Totino, Spagnolo and Perri). Tiles of 227x227 px. Not redistributed.",
+  "risk_levels": {
+    "low": "score <= 0.000255: looks like a sound weld",
+    "check": "0.000255 < score <= 0.001442: unusual, an inspector should look",
+    "high": "score > 0.001442: strongly abnormal, inspect first"
+  },
+  "t_low": 0.0002550000499468297,
+  "t_high": 0.0014415513724088669,
+  "t_low_rule": "98% of defect validation tiles score above it",
+  "t_high_rule": "only 0.5% of sound validation tiles score above it"
 }
