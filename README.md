@@ -21,10 +21,19 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 
 | Day | Folder | Status |
 |---|---|---|
-| Mon 16 Nov | [01_autoencoder/](01_autoencoder/) | in progress |
+| Mon 16 Nov | [01_autoencoder/](01_autoencoder/) | model trained, compared and exported; Hugging Face upload and slides pending |
 | Tue 17 Nov | `02_model_server/` | |
 | Wed 18 Nov | `03_app/` | |
 | Thu 19 Nov | `04_final/` | |
+
+## Results so far (Monday)
+
+A convolutional autoencoder (64 px, code of 32 numbers, 0.7 M parameters), trained **only on sound welds**, flags defects by how badly it rebuilds them.
+- **About 0.99 ROC AUC on unseen welds.** On the 4 test welds: AUC 0.999, recall 0.984.
+- **Risk levels:** 91% of sound tiles are "low" (can be skipped), and only 0.5% of defect tiles end up there.
+- **The error map shows where the defect is.**
+
+Details, comparison table and figures: [01_autoencoder/README.md](01_autoencoder/README.md).
 
 ## Data
 
