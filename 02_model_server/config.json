@@ -1,0 +1,51 @@
+{
+  "model": "ConvAE (convolutional autoencoder)",
+  "setup": "D: Conv AE, 64 px, latent 32",
+  "latent_dim": 32,
+  "image_size": 64,
+  "input": {
+    "name": "image",
+    "shape": [
+      "batch",
+      1,
+      64,
+      64
+    ],
+    "dtype": "float32"
+  },
+  "output": {
+    "name": "reconstruction",
+    "shape": [
+      "batch",
+      1,
+      64,
+      64
+    ]
+  },
+  "preprocessing": "greyscale (PIL mode 'L'), resize to 64x64 with bilinear interpolation, pixels divided by 255 (0-1), shape (1, 1, H, W)",
+  "score": "anomaly score = mean over pixels of (input - reconstruction)^2",
+  "error_map": "(input - reconstruction)^2 per pixel: where the model fails to rebuild the tile",
+  "threshold": 0.0003445311158429831,
+  "threshold_rule": "95th percentile of the score on no_defect validation tiles (about 5% false alarms by design)",
+  "decision": "score > threshold -> flag the tile for inspection",
+  "normal_class": "no_defect",
+  "anomaly_classes_in_test": [
+    "porosity",
+    "crack",
+    "lack_of_penetration"
+  ],
+  "validation_roc_auc": 0.99,
+  "test_roc_auc": 0.999,
+  "test_precision": 0.994,
+  "test_recall": 0.984,
+  "data": "RIAWELC weld radiographs (Totino, Spagnolo and Perri). Tiles of 227x227 px. Not redistributed.",
+  "risk_levels": {
+    "low": "score <= 0.000255: looks like a sound weld",
+    "check": "0.000255 < score <= 0.001442: unusual, an inspector should look",
+    "high": "score > 0.001442: strongly abnormal, inspect first"
+  },
+  "t_low": 0.0002550000499468297,
+  "t_high": 0.0014415513724088669,
+  "t_low_rule": "98% of defect validation tiles score above it",
+  "t_high_rule": "only 0.5% of sound validation tiles score above it"
+}
