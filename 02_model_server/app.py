@@ -1,11 +1,11 @@
-"""Model server: anomaly detection with a convolutional autoencoder (Gradio + ONNX Runtime).
+"""Model server: weld X-ray anomaly detection with a convolutional autoencoder (Gradio + ONNX Runtime).
 
-The page has a form for people (upload an image, see the result) and an API
-for programs (`/predict`: send a base64 image, get JSON back). The Cloudflare
-app of notebook 2 uses the API. Runs locally (`python app.py`) and on Render.
+The page has a form for people (upload an X-ray tile, see the risk level and where to look) and an
+API for programs (`/predict`: send a base64 image, get JSON back). The Cloudflare app uses the API.
+Runs locally (`python app.py`) and on Render.
 
-The model is the ONNX file exported in notebook 1: it contains the architecture
-AND the weights, so this file needs no PyTorch and no copy of the model class.
+The model is the ONNX file exported in 01_autoencoder (setup D: convolutional autoencoder, 64 px,
+code of 32 numbers). It contains the architecture AND the weights, so no PyTorch is needed here.
 """
 import base64
 import io
@@ -19,84 +19,128 @@ import onnxruntime as ort
 from PIL import Image
 
 HERE = Path(__file__).parent
-CONFIG = json.loads((HERE / "anomaly_ae_config.json").read_text())
-SIZE = CONFIG["image_size"]
-THRESHOLD = CONFIG["threshold"]
+CONFIG = json.loads((HERE / "config.json").read_text())
+SIZE = CONFIG["image_size"]            # 64
+THRESHOLD = CONFIG["threshold"]        # 95th percentile of sound validation tiles
+T_LOW = CONFIG["t_low"]                # below: low risk  (98% of validation defects score above it)
+T_HIGH = CONFIG["t_high"]              # above: high risk (only 0.5% of sound validation tiles score above it)
 
-session = ort.InferenceSession(HERE / "anomaly_ae.onnx")
+# Per-pixel squared error shown as full brightness in the error map. Fixed, so a sound tile stays dark
+# and maps can be compared between tiles (a pore reaches ~0.25, faint cracks ~0.02).
+ERROR_MAP_MAX = 0.05
+
+session = ort.InferenceSession(str(HERE / "anomaly_ae.onnx"), providers=["CPUExecutionProvider"])
 INPUT_NAME = session.get_inputs()[0].name
 
+RISK_TEXT = {
+    "low": "LOW: looks like a sound weld",
+    "check": "CHECK: unusual, an inspector should look",
+    "high": "HIGH: strongly abnormal, inspect first",
+}
 
-def preprocess(image: Image.Image):
-    # The SAME preprocessing as in training: greyscale, 28 x 28, pixels 0-1, light object on dark background
-    grey = image.convert("L").resize((SIZE, SIZE))
+
+def preprocess(image: Image.Image) -> np.ndarray:
+    # The SAME preprocessing as in training: greyscale, 64 x 64 (bilinear), pixels 0-1.
+    # No inversion: X-ray tiles always look the same way (dark = less metal).
+    grey = image.convert("L").resize((SIZE, SIZE), Image.Resampling.BILINEAR)
     x = np.asarray(grey, dtype=np.float32) / 255.0
-    inverted = bool(x.mean() > 0.5)          # a photo on a white background: flip it
-    if inverted:
-        x = 1.0 - x
-    return x[None, None], inverted           # shape (1, 1, 28, 28): one image, one channel
+    return x[None, None]                 # shape (1, 1, 64, 64): one image, one channel
 
 
-def to_image(array, scale=8):
-    # A 28 x 28 array (0-1) -> an enlarged PIL image to display
-    img = Image.fromarray((np.clip(array, 0, 1) * 255).astype(np.uint8))
-    return img.resize((SIZE * scale, SIZE * scale), Image.NEAREST)
+def risk_level(score: float) -> str:
+    return "high" if score > T_HIGH else "check" if score > T_LOW else "low"
 
 
 def analyse(image: Image.Image):
-    x, inverted = preprocess(image)
+    x = preprocess(image)
     rebuilt = session.run(None, {INPUT_NAME: x})[0]
-    error_map = ((rebuilt - x) ** 2)[0, 0]
-    score = float(error_map.mean())
-    return {
-        "score": round(score, 5),
-        "threshold": round(THRESHOLD, 5),
+    error_map = ((rebuilt - x) ** 2)[0, 0]        # where the model failed to rebuild the tile
+    score = float(error_map.mean())               # the anomaly score: mean squared error
+    level = risk_level(score)
+    result = {
+        "score": round(score, 6),
+        "risk_level": level,
         "is_anomaly": score > THRESHOLD,
         "score_vs_threshold": round(score / THRESHOLD, 2),
-        "inverted_input": inverted,
-    }, rebuilt[0, 0], error_map
+        "threshold": round(THRESHOLD, 6),
+        "t_low": round(T_LOW, 6),
+        "t_high": round(T_HIGH, 6),
+    }
+    return result, rebuilt[0, 0], error_map
 
 
-# ---- For people: the web form ------------------------------------------------
+# ---- Images for display ---------------------------------------------------------
+HEAT_STOPS = np.array([[0, 0, 4], [87, 16, 110], [188, 55, 84], [249, 142, 9], [252, 255, 164]], dtype=np.float32)
+
+
+def heat_colours(values: np.ndarray) -> np.ndarray:
+    # Values 0-1 -> RGB on a dark-to-yellow scale (similar to matplotlib's "inferno"), without matplotlib
+    pos = np.clip(values, 0, 1) * (len(HEAT_STOPS) - 1)
+    lo = np.floor(pos).astype(int).clip(0, len(HEAT_STOPS) - 2)
+    frac = (pos - lo)[..., None]
+    return (HEAT_STOPS[lo] * (1 - frac) + HEAT_STOPS[lo + 1] * frac).astype(np.uint8)
+
+
+def grey_image(array: np.ndarray, scale: int = 4) -> Image.Image:
+    img = Image.fromarray((np.clip(array, 0, 1) * 255).astype(np.uint8))
+    return img.resize((SIZE * scale, SIZE * scale), Image.Resampling.NEAREST)
+
+
+def heatmap_image(error_map: np.ndarray, scale: int = 4) -> Image.Image:
+    img = Image.fromarray(heat_colours(error_map / ERROR_MAP_MAX))
+    return img.resize((SIZE * scale, SIZE * scale), Image.Resampling.NEAREST)
+
+
+def png_base64(image: Image.Image) -> str:
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode()
+
+
+# ---- For people: the web form ----------------------------------------------------
 def analyse_for_page(image):
     if image is None:
-        raise gr.Error("Upload an image first.")
+        raise gr.Error("Upload an X-ray tile first.")
     result, rebuilt, error_map = analyse(image)
-    verdict = "Anomaly" if result["is_anomaly"] else "Normal"
-    return {verdict: 1.0}, result, to_image(rebuilt), to_image(error_map / max(error_map.max(), 1e-8))
+    return {RISK_TEXT[result["risk_level"]]: 1.0}, result, grey_image(rebuilt), heatmap_image(error_map)
 
 
-# ---- For programs: base64 image in, JSON out ---------------------------------
+# ---- For programs: base64 image in, JSON out --------------------------------------
 def predict(image_b64: str) -> dict:
-    """Score one image. Send a base64-encoded PNG or JPEG (a 'data:image/...;base64,' prefix is allowed)."""
+    """Score one weld X-ray tile. Send a base64-encoded PNG or JPEG (a 'data:image/...;base64,' prefix is allowed).
+    Returns the score, the risk level (low / check / high), and the reconstruction and error map as base64 PNGs."""
     if "," in image_b64[:100]:
         image_b64 = image_b64.split(",", 1)[1]
     image = Image.open(io.BytesIO(base64.b64decode(image_b64)))
-    result, rebuilt, _ = analyse(image)
-    buffer = io.BytesIO()
-    to_image(rebuilt, scale=4).save(buffer, format="PNG")
-    result["reconstruction_png_base64"] = base64.b64encode(buffer.getvalue()).decode()
+    result, rebuilt, error_map = analyse(image)
+    result["reconstruction_png_base64"] = png_base64(grey_image(rebuilt))
+    result["error_map_png_base64"] = png_base64(heatmap_image(error_map))
     return result
 
 
-with gr.Blocks(title="Autoencoder anomaly detector") as demo:
+EXAMPLES = sorted(str(p) for p in (HERE / "examples").glob("*.png"))   # local only: dataset tiles are not in git
+
+with gr.Blocks(title="Weld X-ray anomaly detector") as demo:
     gr.Markdown(
-        "# Autoencoder anomaly detector\n"
-        f"Trained only on **{', '.join(CONFIG['normal_classes'])}** (Fashion-MNIST). "
-        "Anything else is rebuilt badly and gets a high reconstruction error. "
-        f"Above the threshold ({THRESHOLD:.4f}) the image is flagged as an anomaly."
+        "# Weld X-ray anomaly detector\n"
+        "A convolutional autoencoder trained **only on sound welds** (RIAWELC X-ray tiles). "
+        "It redraws every tile as a sound weld: where it fails, there is probably a defect "
+        "(porosity, crack, lack of penetration).\n\n"
+        f"**Risk levels:** low (score ≤ {T_LOW:.6f}) · check · high (score > {T_HIGH:.6f}). "
+        "A screening aid for an inspector, not an accept/reject decision."
     )
     with gr.Row():
         with gr.Column():
-            image_in = gr.Image(type="pil", label="Input image")
+            image_in = gr.Image(type="pil", label="X-ray tile of a weld")
             button = gr.Button("Analyse", variant="primary")
-            gr.Examples(sorted(str(p) for p in (HERE / "examples").glob("*.png")), inputs=image_in)
+            if EXAMPLES:
+                gr.Examples(EXAMPLES, inputs=image_in)
         with gr.Column():
-            verdict_out = gr.Label(label="Verdict")
+            verdict_out = gr.Label(label="Risk level")
             details_out = gr.JSON(label="Details")
             with gr.Row():
-                rebuilt_out = gr.Image(label="Reconstruction")
-                error_out = gr.Image(label="Error map (bright = rebuilt badly)")
+                rebuilt_out = gr.Image(label="Rebuilt as a sound weld")
+                error_out = gr.Image(label="Error map: bright = where to look")
     button.click(analyse_for_page, inputs=image_in, outputs=[verdict_out, details_out, rebuilt_out, error_out],
                  api_visibility="private")
     gr.api(predict, api_name="predict")
