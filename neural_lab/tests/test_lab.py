@@ -2,6 +2,7 @@
 
 Fast tests need only the model download. Tests marked 'data' are skipped when RIAWELC is not extracted."""
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -123,3 +124,31 @@ def test_published_metrics_are_reproduced(pretrained):
     assert m["threshold_rel_diff"] < 0.01, m          # GPU (training) vs CPU maths: tiny differences allowed
     assert round(m["val_roc_auc"], 3) == config["validation_roc_auc"], m
     assert round(m["test_roc_auc"], 3) == config["test_roc_auc"], m
+
+
+# ---- NEURAL / LAB page: the two ONNX halves the browser runs ---------------------------------------------------
+def test_browser_model_equals_deployed_model_and_hooks(pretrained, tmp_path):
+    from neural_lab.playground.export import decoder_taps_check, export_halves, run_halves
+    model, _ = pretrained
+    export_halves(model, tmp_path)
+    X = torch.rand(6, 1, 64, 64, generator=torch.Generator().manual_seed(3)).numpy()
+    rec, lat, blocks = run_halves(onnx_session(tmp_path / "encoder.onnx"), onnx_session(tmp_path / "decoder.onnx"),
+                                  X, keep_blocks=range(6))
+    full = onnx_session(SERVER_DIR / "anomaly_ae.onnx").run(None, {"image": X})[0]
+    assert lat.shape == (6, 32)
+    assert np.abs(rec - full).max() < 1e-4
+    for i in range(6):
+        inf = activations.run(model, torch.from_numpy(X[i:i + 1]))
+        assert np.abs(lat[i] - inf.latent).max() < 1e-4
+        for k in range(3):
+            assert np.abs(blocks[i][k] - inf.blocks[f"block{k + 1}"]).max() < 1e-4
+    assert decoder_taps_check(model, onnx_session(tmp_path / "decoder.onnx"), lat) < 1e-4
+
+
+def test_page_uses_only_served_model_outputs():
+    static = Path(neural_lab.__file__).parent / "playground" / "static"
+    for f in ["index.html", "classic.html", "core.js", "arch.js"]:
+        src = (static / f).read_text(encoding="utf-8")
+        assert "Math.random" not in src, f"{f}: nothing on the page may be invented"
+    core = (static / "core.js").read_text(encoding="utf-8")
+    assert "/models/encoder.onnx" in core and "/models/decoder.onnx" in core

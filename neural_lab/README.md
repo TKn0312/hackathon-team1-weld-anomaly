@@ -15,7 +15,28 @@ python -m neural_lab.verify                # PyTorch == ONNX, published threshol
 python -m pytest neural_lab/tests -q       # tests
 python -m neural_lab.app                   # the explorer: http://127.0.0.1:7861
 python -m neural_lab.render_examples       # optional: save the figures to neural_lab/outputs/
+python -m neural_lab                       # NEURAL / LAB: the main app (http://127.0.0.1:7870)
 ```
+
+### NEURAL / LAB — Exploring the Black Box
+
+The main app. The published model runs **in the browser** (ONNX Runtime Web), so it reacts live.
+
+- **Defect experiment**: start from a test-weld tile or upload one, draw on a large canvas; reconstruction, error
+  heatmap (overlay on the weld), score, LOW / CHECK / HIGH and a before/after wipe update while you draw.
+  **Sensitivity experiment**: one synthetic pore / crack / band on 12 sound test welds, sweep its size or darkness,
+  plot the real scores (mean and range) against real defect scores of the test welds; CSV export.
+- **Neural explorer**: six latent numbers preselected by *measured* influence (all 32 in advanced mode, ranges =
+  1st-99th percentile of real test tiles), original vs edited code and redraw, the difference they make, real
+  block 1-3 feature maps (and how your drawing changed them), and a PCA map of the 3,019 test tiles where your
+  weld and your edited code move live.
+
+`playground/export.py` prepares it: exports the encoder (with its three block outputs) and decoder from the published
+weights and checks them against the deployed ONNX model, PyTorch and the forward hooks; measures neuron influence;
+computes the PCA. The page lists these checks at the bottom. A drawn mark is not a real defect: the page never
+claims the model will flag it.
+
+The Gradio explorer (`python -m neural_lab.app`) still works but is superseded by NEURAL / LAB.
 
 ## Files
 
@@ -27,6 +48,7 @@ python -m neural_lab.render_examples       # optional: save the figures to neura
 | `verify.py` | the model is the deployed one: same ONNX file, same outputs, same threshold and ROC AUC |
 | `plots.py` | figures: input / reconstruction / error map, feature maps, latent code, sound-vs-defect comparison |
 | `explorer.py`, `app.py` | the local Gradio interface |
+| `playground/` | NEURAL / LAB: export + checks, a small local server (127.0.0.1 only), the in-browser page |
 | `tests/` | pytest checks for all of the above |
 
 Git-ignored: `neural_lab/.cache/` (split table, cached test scores) and `neural_lab/outputs/` (figures contain

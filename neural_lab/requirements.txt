@@ -2,3 +2,6 @@
 # scikit-learn, onnxruntime, huggingface_hub). Same Gradio version as 02_model_server.
 gradio==6.32.0
 pytest
+# ONNX export of the encoder/decoder halves for the playground (same pins as 01_autoencoder/requirements.txt)
+onnx==1.23.2
+onnxscript==0.7.2

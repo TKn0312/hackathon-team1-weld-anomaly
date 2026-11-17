@@ -5,6 +5,8 @@
 Local only and separate from 02_model_server/ (the deployed app is not touched or imported).
 Every number and image shown comes from a real forward pass of the published model.
 """
+import os
+
 import gradio as gr
 
 from . import plots
@@ -91,4 +93,5 @@ with gr.Blocks(title="Weld AE · Neural Network Lab") as demo:
         gr.Markdown(ABOUT)
 
 if __name__ == "__main__":
-    demo.launch(server_name="127.0.0.1", server_port=7861, inbrowser=True)
+    # Port 7861 by default; another one with:  $env:GRADIO_SERVER_PORT="7862"
+    demo.launch(server_name="127.0.0.1", server_port=int(os.environ.get("GRADIO_SERVER_PORT", 7861)), inbrowser=True)
