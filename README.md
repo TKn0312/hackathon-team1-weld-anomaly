@@ -22,7 +22,7 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 | Day | Folder | Status |
 |---|---|---|
 | Mon 16 Nov | [01_autoencoder/](01_autoencoder/) | done: model trained, compared, published on Hugging Face; Tuesday slides ready |
-| Tue 17 Nov | `02_model_server/` | |
+| Tue 17 Nov | [02_model_server/](02_model_server/) | in progress: folder set up from the teacher's template |
 | Wed 18 Nov | `03_app/` | |
 | Thu 19 Nov | `04_final/` | |
 
