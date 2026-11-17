@@ -37,3 +37,6 @@ kaggle.json
 # model server example tiles come from RIAWELC: not redistributed
 02_model_server/examples/*
 !02_model_server/examples/.gitkeep
+
+# Python cache
+__pycache__/
