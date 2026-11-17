@@ -13,7 +13,7 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 | Part | Link |
 |---|---|
 | Model on Hugging Face | [iaac-maai/hackathon-team1-weld-anomaly-ae](https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae) |
-| Model server (Render) | Tuesday |
+| Model server (Render) | [hackathon-team1-weld-anomaly.onrender.com](https://hackathon-team1-weld-anomaly.onrender.com) (sleeps after 15 min idle; first call ~1 min) |
 | App (Cloudflare Pages) | Wednesday |
 | Impulse talk slides | [impulse/LINK.md](impulse/LINK.md) |
 
@@ -22,7 +22,7 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 | Day | Folder | Status |
 |---|---|---|
 | Mon 16 Nov | [01_autoencoder/](01_autoencoder/) | done: model trained, compared, published on Hugging Face; Tuesday slides ready |
-| Tue 17 Nov | [02_model_server/](02_model_server/) | in progress: folder set up from the teacher's template |
+| Tue 17 Nov | [02_model_server/](02_model_server/) | done: model server live on Render, callable with gradio_client and plain HTTP |
 | Wed 18 Nov | `03_app/` | |
 | Thu 19 Nov | `04_final/` | |
 
