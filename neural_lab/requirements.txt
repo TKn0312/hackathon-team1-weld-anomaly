@@ -1,0 +1,4 @@
+# Neural Network Lab, on top of 01_autoencoder/requirements.txt (torch, numpy, pandas, matplotlib, pillow,
+# scikit-learn, onnxruntime, huggingface_hub). Same Gradio version as 02_model_server.
+gradio==6.32.0
+pytest

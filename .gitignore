@@ -40,3 +40,10 @@ kaggle.json
 
 # Python cache
 __pycache__/
+
+# Neural Network Lab: caches and figures with RIAWELC pixels
+neural_lab/.cache/
+neural_lab/outputs/
+.pytest_cache/
+.gradio/
+flagged/
