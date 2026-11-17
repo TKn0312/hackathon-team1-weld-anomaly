@@ -147,7 +147,7 @@ def test_browser_model_equals_deployed_model_and_hooks(pretrained, tmp_path):
 
 def test_page_uses_only_served_model_outputs():
     static = Path(neural_lab.__file__).parent / "playground" / "static"
-    for f in ["index.html", "classic.html", "core.js", "arch.js"]:
+    for f in ["index.html", "classic.html", "core.js", "arch.js", "defect.js", "universe.js", "demo.js"]:
         src = (static / f).read_text(encoding="utf-8")
         assert "Math.random" not in src, f"{f}: nothing on the page may be invented"
     core = (static / "core.js").read_text(encoding="utf-8")

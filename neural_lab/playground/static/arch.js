@@ -17,6 +17,7 @@ const Arch = (() => {
   ];
   const SIZE = { 64: 164, 32: 132, 16: 106, 8: 86 };
   const PLANES = 5;
+  let dirty = false;
   let root, zMod = null, steered = null, ranks = {}, busy = false, again = false;
   const $ = (s, el = document) => el.querySelector(s);
 
@@ -49,7 +50,8 @@ const Arch = (() => {
     $("#drawerClose").onclick = closeDrawer;
     addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
     addEventListener("resize", flows);
-    NL.on(what => { if (what === "tile" || what === "draw") { zMod = NL.state.now.z.slice(); steered = null; rerank(); render(); } });
+    NL.on(what => { if (what === "tile" || what === "draw") { zMod = NL.state.now.z.slice(); steered = null; rerank();
+      if (root.hidden) dirty = true; else render(); } });
   }
 
   /* channel order (strongest first) is fixed per weld, so planes do not jump while you steer */
@@ -170,5 +172,8 @@ const Arch = (() => {
   }
   function closeDrawer() { openK = null; $("#drawer").classList.remove("open"); }
 
-  return { build, render, STATIONS, get zMod() { return zMod; } };
+  function show() { if (dirty || !zMod) { dirty = false; render(); } else flows(); }
+  /* used by the demo: move one latent number to a value inside its real range, decoder answers */
+  function setLatent(d, v) { zMod[d] = v; return steer(); }
+  return { build, render, show, setLatent, STATIONS, get zMod() { return zMod; } };
 })();
