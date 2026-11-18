@@ -93,6 +93,12 @@ Each tile's 32-number code, squeezed into 2D with UMAP (validation and test tile
 - **The code mostly describes how the X-ray looks:** 60% of neighbours come from the same weld (14% by chance). It stores brightness and grain, which is what's needed to redraw a sound weld; the defect is what it leaves out.
 - **Detection comes from the reconstruction error, not from the position on the map.**
 
+**Why UMAP and not t-SNE.** Both draw the 32-number codes as a 2D map that keeps similar tiles together. We chose UMAP because it suits our question better:
+- **It keeps more of the overall layout.** We want to see whether sound welds form one region and defects sit apart from it. On a t-SNE map, the distance between two groups means little: two islands far apart need not be very different. UMAP keeps the global structure better, so the map is closer to the real code.
+- **It is faster on thousands of points.** The map has 5,807 tiles, and t-SNE slows down much more as the number of points grows.
+- **It can place new tiles on an existing map.** t-SNE has to recompute the whole map for every new tile. UMAP can add new tiles approximately, which fits a tool that keeps scoring new welds. (For the live map in NEURAL / LAB · Look inside we use PCA, which places a drawn weld instantly.)
+- **The numbers above do not depend on the map.** The neighbour percentages are measured in the full 32-number code, not on the 2D picture. A t-SNE map would draw the same codes differently, but it would not change these numbers or the detection, which uses the reconstruction error.
+
 ### Test set (4 unseen welds), setup D
 
 - **ROC AUC 0.999**, precision 0.994, recall 0.984 at the 95% threshold
