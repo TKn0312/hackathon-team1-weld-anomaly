@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in · Weld X-ray Check</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="login">
+    <p class="wm">Weld <i>X-ray</i> Check</p>
+    <h1>Screen a weld.<br>See where to look.</h1>
+    <p class="muted">This app is private. Enter the team password.</p>
+    <form method="post" action="/api/login">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required autofocus>
+      <button class="primary" type="submit">Log in</button>
+    </form>
+    <p id="wrong" class="error-text" hidden style="margin-top: 14px">Wrong password. Try again.</p>
+  </div>
+  <script>
+    if (new URLSearchParams(location.search).has("wrong")) {
+      document.getElementById("wrong").hidden = false;
+    }
+  </script>
+</body>
+</html>
