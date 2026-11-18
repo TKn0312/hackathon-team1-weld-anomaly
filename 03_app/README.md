@@ -31,10 +31,12 @@ The app has one shared team password. It is given in the course hand-in, **not**
 
 In [`diagrams/`](diagrams) and on our Miro board:
 
-- 2 user stories (the inspector, the engineer)
-- 1 system diagram
-- the D1 table with example rows
-- 3 sequence diagrams: checking a weld, looking inside the network, the wake-up
+- [2 user stories](diagrams/user_stories.png) (the inspector, the engineer)
+- [1 system diagram](diagrams/system.png)
+- [the D1 table with example rows](diagrams/d1_table.png)
+- 3 sequence diagrams: [checking a weld](diagrams/sequence_1_check_a_weld.png), [looking inside the network](diagrams/sequence_2_look_inside.png), [the wake-up](diagrams/sequence_3_wake_up.png)
+
+![System diagram](diagrams/system.png)
 
 ## Our diagrams compared with the app we built
 
