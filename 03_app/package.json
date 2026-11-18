@@ -1,0 +1,14 @@
+{
+  "name": "hackathon-team1-weld-app",
+  "private": true,
+  "description": "Team 1 weld anomaly app: a password-protected page that calls our model server and stores results in D1 and R2",
+  "scripts": {
+    "db:local": "wrangler d1 execute hackathon-team1-weld-db --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute hackathon-team1-weld-db --remote --file=schema.sql",
+    "dev": "wrangler pages dev",
+    "deploy": "wrangler pages deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.156.1"
+  }
+}
