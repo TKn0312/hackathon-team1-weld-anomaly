@@ -23,7 +23,7 @@ def wake_up(url, tries=12, wait=10):
     start = time.time()
     for _ in range(tries):
         try:
-            if httpx.get(url, timeout=60).status_code == 200:
+            if httpx.get(url, timeout=60, follow_redirects=True).status_code == 200:
                 print(f"server awake after {time.time() - start:.0f} s")
                 return True
         except httpx.HTTPError:

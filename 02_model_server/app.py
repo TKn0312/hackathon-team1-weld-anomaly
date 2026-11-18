@@ -209,6 +209,14 @@ if (LAB / "static" / "index.html").exists():
             return JSONResponse({"error": "not found"}, status_code=404)
         return FileResponse(LAB / "models" / name, media_type="application/octet-stream")
 
+from fastapi.responses import RedirectResponse
+
+
+@app.get("/gradio", include_in_schema=False)
+def gradio_no_slash():
+    return RedirectResponse("/gradio/")                       # '/gradio' alone would otherwise be "not found"
+
+
 app = gr.mount_gradio_app(app, demo, path="/gradio")          # our tile app + its /predict API
 if (LAB / "static" / "index.html").exists():
     app.mount("/", StaticFiles(directory=LAB / "static", html=True), name="lab")   # last: the lab page itself
