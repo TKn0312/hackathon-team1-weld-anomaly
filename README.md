@@ -39,7 +39,7 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 |---|---|---|
 | Mon 16 Nov | [01_autoencoder/](01_autoencoder/) | done: model trained, compared, published on Hugging Face; Tuesday slides ready |
 | Tue 17 Nov | [02_model_server/](02_model_server/) · [neural_lab/](neural_lab/) | done: Render serves NEURAL / LAB as the app, plus the `/predict` API |
-| Wed 18 Nov | [03_app/](03_app/) | app live on Cloudflare: password, our Render API, D1 + R2; diagrams to add |
+| Wed 18 Nov | [03_app/](03_app/) | done: app live on Cloudflare (password, our Render API, D1 + R2), user stories and diagrams |
 | Thu 19 Nov | `04_final/` | |
 
 ## Results so far (Monday)
