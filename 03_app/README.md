@@ -2,7 +2,7 @@
 
 **Live app:** https://hackathon-team1-weld-app.pages.dev
 
-A password-protected web app for weld inspectors. You upload an X-ray tile of a weld; our model (a convolutional autoencoder that learned only from good welds) tries to redraw it. Where it can't, the error map lights up. The app shows a risk level (**LOW / CHECK / HIGH**), the score against the two thresholds, the uploaded X-ray and the error heat map, and saves every check so it is still there after a reload. A button opens **NEURAL / LAB**, where you can look inside the same network.
+A password-protected web app for weld inspectors. You upload an X-ray tile of a weld; our model (a convolutional autoencoder that learned only from good welds) tries to redraw it. Where it can't, the error map lights up. The app shows a risk level (**LOW / CHECK / HIGH**), the score against the two thresholds, and three images side by side: the uploaded X-ray, the model's redraw and the error heat map. It saves every check so it is still there after a reload. A button opens **NEURAL / LAB**, where you can look inside the same network.
 
 It is a screening aid, not a verdict: a qualified inspector decides.
 
@@ -40,7 +40,7 @@ In [`diagrams/`](diagrams) and on our Miro board:
 
 - **Story 1 (inspect and save) matches the app:** upload → model → R2 + D1 → result, and the history comes back from D1 after a reload.
 - **Story 2 (look inside the network) only partly matches:** the button opens NEURAL / LAB, but the flagged weld is not passed along, so the engineer uploads it again there. The two apps run on different services (Cloudflare and Render) and do not share files.
-- **Pages, not Workers:** the brief suggests Workers; we used Cloudflare Pages + Pages Functions (the class example), which do the same job.
+- **Pages, not Workers:** the brief allows both and says Cloudflare now recommends Workers for new projects; we used Cloudflare Pages + Pages Functions (the class example), which do the same job.
 - **The wake-up needed more than a simple retry:** the Worker first asks Render whether it is awake, and the page keeps one long "are you up?" request open while it retries every 10 s, because the first answer after a restart took about 47 s.
 - **Saved checks show two images, not three:** the redraw is not stored in R2, only the X-ray and the error map.
 
@@ -56,8 +56,20 @@ npx wrangler pages dev
 
 `MOCK_MODEL = "1"` in `wrangler.toml` returns a made-up answer, so the page can be built without the model server; `"0"` calls the real one.
 
+## Put it online
+
+Cloudflare is **not** connected to GitHub: a push does not change the live app. After pushing to `main`, someone with access to the team's Cloudflare account deploys it:
+
+```bash
+cd 03_app
+npx wrangler login                                   # once per computer
+npx wrangler pages deploy --branch main              # updates hackathon-team1-weld-app.pages.dev
+```
+
+Set up once (already done): `npx wrangler d1 create hackathon-team1-weld-db` (its id goes into `wrangler.toml`), `npx wrangler r2 bucket create hackathon-team1-weld-images`, `npx wrangler d1 execute hackathon-team1-weld-db --remote --file=schema.sql`, `npx wrangler pages secret put APP_PASSWORD`.
+
 ## Limits
 
-- The model was trained on 227 × 227 px weld tiles from RIAWELC. A whole photo or a picture of something else gets a high score because it is unlike anything the model has seen, not because of a defect.
+- The model was trained on RIAWELC weld tiles (227 × 227 px, shrunk to 64 × 64 px). A whole photo or a picture of something else usually gets a high score because it is unlike anything the model has seen, not because of a defect. It is not a reliable "is this a weld?" check: a plain grey image scored LOW in our test.
 - Free plans: Render sleeps after 15 minutes; Cloudflare's free limits are enough for this project.
-- Dataset: RIAWELC (Totino, Spagnolo & Perri, ICMECE 2022; Perri et al., Manufacturing Letters). No RIAWELC images are stored in this repository.
+- Dataset: RIAWELC (Totino, Spagnolo & Perri, ICMECE 2022; Perri et al., Manufacturing Letters). The full RIAWELC images are not in this repository; only NEURAL / LAB packs 115 test tiles at 64 × 64 px (what the model sees, `02_model_server/lab/data/`).

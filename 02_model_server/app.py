@@ -114,7 +114,7 @@ with gr.Blocks(title="Weld X-ray anomaly detector: API") as demo:
     )
     gr.api(predict, api_name="predict")
 
-# ---- NEURAL / LAB (Sahil's lab, neural_lab/) at the main address ------------------------------------
+# ---- NEURAL / LAB (neural_lab/) at the main address --------------------------------------------------
 # The lab runs the model in the browser (two ONNX halves); the server only hands out files, a small set of
 # test tiles (64 px, packed by build_lab.py) and the preprocessing of uploads. Our Gradio app moves to /gradio.
 import uvicorn

@@ -12,7 +12,7 @@
 - **Latent universe:** all 3,019 test welds as points in the model's latent space.
 - **90-second demo:** a guided tour.
 
-Works on any phone or laptop, nothing to install. The free server sleeps after 15 minutes without visitors, so the first visit then takes about a minute. The lab was built by Sahil ([neural_lab/](neural_lab/)) on top of the team's model.
+Works on any phone or laptop, nothing to install. The free server sleeps after 15 minutes without visitors, so the first visit then takes about a minute. The lab's code is in [neural_lab/](neural_lab/).
 
 ## Getting started
 
@@ -33,8 +33,8 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 | Day | Folder | Status |
 |---|---|---|
 | Mon 16 Nov | [01_autoencoder/](01_autoencoder/) | done: model trained, compared, published on Hugging Face; Tuesday slides ready |
-| Tue 17 Nov | [02_model_server/](02_model_server/) · [neural_lab/](neural_lab/) | done: Render serves NEURAL / LAB (Sahil's lab) as the app, plus the `/predict` API |
-| Wed 18 Nov | [03_app/](03_app/) | app live on Cloudflare (Amelia): password, our Render API, D1 + R2; diagrams (Sahil) to add |
+| Tue 17 Nov | [02_model_server/](02_model_server/) · [neural_lab/](neural_lab/) | done: Render serves NEURAL / LAB as the app, plus the `/predict` API |
+| Wed 18 Nov | [03_app/](03_app/) | app live on Cloudflare: password, our Render API, D1 + R2; diagrams to add |
 | Thu 19 Nov | `04_final/` | |
 
 ## Results so far (Monday)
@@ -48,7 +48,7 @@ Details, comparison table and figures: [01_autoencoder/README.md](01_autoencoder
 
 ## Data
 
-[RIAWELC](https://github.com/stefyste/RIAWELC): 24,407 greyscale X-ray patches (227 × 227 px; the dataset README says 224) of steel welds from 29 radiographs, in four classes: no defect, porosity, crack, lack of penetration. No formal licence: the data is released freely with a request to cite Totino, Spagnolo and Perri (2023), "RIAWELC: a novel dataset of radiographic images for automatic weld defects classification", and the second paper listed in the dataset README. The images are not redistributed in this repository or on Hugging Face.
+[RIAWELC](https://github.com/stefyste/RIAWELC): 24,407 greyscale X-ray patches (227 × 227 px; the dataset README says 224) of steel welds from 29 radiographs, in four classes: no defect, porosity, crack, lack of penetration. No formal licence: the data is released freely with a request to cite Totino, Spagnolo and Perri, "RIAWELC: a novel dataset of radiographic images for automatic weld defects classification" (ICMECE 2022), and Perri et al., "Welding defects classification through a convolutional neural network" (Manufacturing Letters). The full images are not redistributed in this repository or on Hugging Face; only NEURAL / LAB packs 115 test tiles at 64 × 64 px (what the model sees, `02_model_server/lab/data/`).
 
 ## AI usage disclosure
 

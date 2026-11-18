@@ -1,4 +1,4 @@
-"""Pack Sahil's NEURAL / LAB (neural_lab/) for the online model server.     Run once on a laptop, from the repo root:
+"""Pack NEURAL / LAB (neural_lab/) for the online model server.     Run once on a laptop, from the repo root:
 
     python 02_model_server/build_lab.py
 

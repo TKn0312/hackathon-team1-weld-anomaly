@@ -1,6 +1,6 @@
 # Neural Network Lab · inside the weld-anomaly autoencoder
 
-An isolated, local experiment by Sahil on top of Team 1's project. It loads the **published, pretrained**
+An isolated, local experiment on top of Team 1's project. It loads the **published, pretrained**
 `ConvAE(64, 32)` from Hugging Face ([iaac-maai/hackathon-team1-weld-anomaly-ae](https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae)),
 runs real tiles through it and shows what happens inside. Nothing is retrained. The deployed app
 (`02_model_server/`) is neither changed nor imported.
