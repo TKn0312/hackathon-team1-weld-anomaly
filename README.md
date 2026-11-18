@@ -25,7 +25,7 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 | Model on Hugging Face | [iaac-maai/hackathon-team1-weld-anomaly-ae](https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae) |
 | **The app: NEURAL / LAB** | **[hackathon-team1-weld-anomaly.onrender.com](https://hackathon-team1-weld-anomaly.onrender.com)**: draw a defect on a real weld X-ray and watch the network react (sleeps after 15 min idle; first visit ~1 min) |
 | Model API (`/predict`) | `https://hackathon-team1-weld-anomaly.onrender.com/gradio`: for programs and the Cloudflare app |
-| App (Cloudflare Pages) | Wednesday |
+| **Weld X-ray Check** (Cloudflare Pages) | **[hackathon-team1-weld-app.pages.dev](https://hackathon-team1-weld-app.pages.dev)**: upload a weld X-ray, get the risk level and the error map; results saved in D1 and R2. Password in the course hand-in |
 | Impulse talk slides | [impulse/LINK.md](impulse/LINK.md) |
 
 ## Days
@@ -34,7 +34,7 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 |---|---|---|
 | Mon 16 Nov | [01_autoencoder/](01_autoencoder/) | done: model trained, compared, published on Hugging Face; Tuesday slides ready |
 | Tue 17 Nov | [02_model_server/](02_model_server/) · [neural_lab/](neural_lab/) | done: Render serves NEURAL / LAB (Sahil's lab) as the app, plus the `/predict` API |
-| Wed 18 Nov | `03_app/` | |
+| Wed 18 Nov | [03_app/](03_app/) | app live on Cloudflare (Amelia): password, our Render API, D1 + R2; diagrams (Sahil) to add |
 | Thu 19 Nov | `04_final/` | |
 
 ## Results so far (Monday)
