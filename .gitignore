@@ -47,3 +47,8 @@ neural_lab/outputs/
 .pytest_cache/
 .gradio/
 flagged/
+
+# model server: NEURAL / LAB bundle (built by 02_model_server/build_lab.py: model halves + 115 tiles at 64 px)
+!02_model_server/lab/models/*.onnx
+!02_model_server/lab/data/
+!02_model_server/lab/data/*

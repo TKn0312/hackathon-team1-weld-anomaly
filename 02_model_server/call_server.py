@@ -16,7 +16,7 @@ import time
 import httpx
 from gradio_client import Client
 
-RENDER_URL = "https://hackathon-team1-weld-anomaly.onrender.com"
+RENDER_URL = "https://hackathon-team1-weld-anomaly.onrender.com/gradio"   # the tile app and its /predict API
 
 
 def wake_up(url, tries=12, wait=10):

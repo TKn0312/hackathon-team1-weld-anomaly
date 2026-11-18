@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NEURAL / LAB — Exploring the Black Box</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112..125,500..800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
+<style>
+:root{
+  --graphite:#1b1c1f; --deck:#232428; --deck2:#2a2c31; --line:#36383e; --bone:#ebe8e1; --dim:#9a9ba0; --faint:#6c6e74;
+  --signal:#e8742c; --low:#74b083; --check:#e2b13c; --high:#d9534a;
+  --display:"Archivo", "Arial Narrow", system-ui, sans-serif; --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--graphite);color:var(--bone);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* masthead */
+.mast{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:28px 40px 18px;border-bottom:1px solid var(--line)}
+.word{font-family:var(--display);font-stretch:125%;font-weight:800;font-size:44px;line-height:.9;letter-spacing:-.5px;margin:0}
+.word i{font-style:normal;color:var(--signal);font-weight:500;padding:0 .12em}
+.tag{color:var(--dim);margin:8px 0 0;max-width:62ch}
+.mode{display:flex;background:var(--deck);border:1px solid var(--line);border-radius:999px;padding:4px}
+.mode button{background:none;border:0;border-radius:999px;padding:10px 20px;cursor:pointer;color:var(--dim);font-weight:500}
+.mode button[aria-selected=true]{background:var(--bone);color:var(--graphite)}
+.status{font-size:13px;color:var(--dim);text-align:right;margin-top:8px}
+.status b{color:var(--low);font-weight:500}
+
+main{padding:28px 40px 56px}
+.view[hidden]{display:none}
+h2{font-family:var(--display);font-stretch:112%;font-weight:700;font-size:22px;margin:0 0 4px;letter-spacing:-.2px}
+.lede{color:var(--dim);margin:0 0 18px;max-width:70ch}
+.deck{background:var(--deck);border:1px solid var(--line);border-radius:6px;padding:20px}
+.small{font-size:13px;color:var(--dim)}
+.btn{background:var(--deck2);border:1px solid var(--line);border-radius:4px;padding:8px 12px;cursor:pointer}
+.btn:hover{border-color:#55585f}
+.btn.on{background:var(--signal);border-color:var(--signal);color:#1b1c1f;font-weight:600}
+select.btn{padding:8px 10px}
+input[type=range]{accent-color:var(--signal);width:100%}
+label.ctl{display:block;font-size:13px;color:var(--dim);margin-bottom:4px}
+
+/* defect experiment */
+.lab{display:grid;grid-template-columns:minmax(380px,640px) minmax(320px,1fr);gap:28px;align-items:start}
+.stagewrap{position:relative}
+#stage{width:100%;aspect-ratio:1;display:block;border-radius:4px;cursor:crosshair;touch-action:none;image-rendering:pixelated;background:#000}
+.stagewrap.drop #stage{outline:2px dashed var(--signal)}
+.wipe{position:absolute;top:0;bottom:0;width:2px;background:var(--bone);pointer-events:none;box-shadow:0 0 0 1px #0006}
+.wipe span{position:absolute;top:10px;left:8px;font-size:12px;background:#000a;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.wipe span.l{left:auto;right:8px}
+.under{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;margin-top:14px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+
+.readout{position:relative;padding:22px 24px 20px;border-radius:6px;background:var(--deck);border:1px solid var(--line);transition:border-color .3s}
+.readout .k{font-size:13px;color:var(--dim)}
+.big{font-family:var(--display);font-stretch:118%;font-weight:700;font-size:64px;line-height:1;letter-spacing:-1.5px;margin:6px 0 2px}
+.level{font-family:var(--display);font-stretch:125%;font-weight:800;font-size:28px;letter-spacing:.5px;transition:color .3s}
+.delta{font-size:14px;color:var(--dim);margin-top:6px}
+.delta b{color:var(--bone);font-weight:600}
+.scale{position:relative;height:10px;margin:26px 0 30px;border-radius:2px;
+  background:linear-gradient(90deg,var(--low) 0 var(--a),var(--check) var(--a) var(--b),var(--high) var(--b) 100%)}
+.scale .mark{position:absolute;top:-7px;width:2px;height:24px;background:var(--bone);transition:left .15s ease-out}
+.scale .orig{position:absolute;top:-4px;width:2px;height:18px;background:var(--faint)}
+.scale .tick{position:absolute;top:16px;transform:translateX(-50%);font-size:11px;color:var(--dim);white-space:nowrap}
+.readout.flash{animation:flash .6s ease-out}
+@keyframes flash{from{box-shadow:0 0 0 0 var(--glow)}to{box-shadow:0 0 0 14px transparent}}
+@media (prefers-reduced-motion:reduce){.readout.flash{animation:none}.scale .mark{transition:none}}
+#spark{width:100%;height:56px;display:block;margin-top:6px}
+.caveat{font-size:13px;color:var(--dim);border-left:2px solid var(--signal);padding-left:10px;margin-top:16px}
+.triptych{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+.triptych figure{margin:0}
+.triptych figcaption{font-size:13px;color:var(--dim);margin-bottom:6px}
+canvas.px{width:100%;aspect-ratio:1;display:block;image-rendering:pixelated;border-radius:3px;background:#000}
+.legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);margin-top:6px}
+.legend i{flex:1;height:6px;border-radius:2px;background:linear-gradient(90deg,#000004,#57106e,#bc3754,#f98e09,#fcffa4)}
+
+/* sensitivity */
+.sens{margin-top:36px;display:grid;grid-template-columns:300px 1fr;gap:24px}
+#sensChart{width:100%;height:360px;display:block}
+.strip{display:flex;gap:4px;margin-top:10px}
+.strip canvas{width:calc((100% - 36px)/10);aspect-ratio:1;image-rendering:pixelated;border-radius:2px}
+
+/* neural explorer */
+.ex{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:28px;align-items:start}
+.pair{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pair figcaption{font-size:12px;color:var(--dim);margin-bottom:4px}
+.pair figure{margin:0}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.slot{background:var(--deck2);border:1px solid var(--line);border-radius:4px;padding:12px}
+.slot.moved{border-color:var(--signal)}
+.slot header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.slot select{background:transparent;border:0;font-family:var(--display);font-stretch:118%;font-weight:700;font-size:20px;padding:0;cursor:pointer}
+.slot .infl{font-size:11px;color:var(--faint)}
+.slot .vals{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-top:4px}
+.slot.moved .vals b{color:var(--signal)}
+.slot .vals b{font-weight:600;color:var(--bone)}
+details.adv{margin-top:14px}
+details.adv summary{cursor:pointer;color:var(--dim)}
+.all{display:grid;grid-template-columns:repeat(8,1fr);gap:8px 12px;margin-top:12px}
+.all .s{font-size:11px;color:var(--dim)}
+.all .s.moved{color:var(--signal)}
+#latBars{width:100%;height:150px;display:block;margin-top:8px}
+.maps{margin-top:28px}
+.maprow{display:grid;grid-template-columns:120px repeat(8,1fr);gap:6px;align-items:center;margin-top:8px}
+.maprow .rl{font-size:12px;color:var(--dim)}
+.maprow canvas{width:100%;aspect-ratio:1;image-rendering:pixelated;border-radius:2px;background:#000}
+.maprow .ch{font-size:10px;color:var(--faint);text-align:center}
+#map{width:100%;aspect-ratio:1.6;display:block;cursor:pointer;background:#16171a;border-radius:4px}
+.key{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin-top:8px}
+.key i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.verify{margin-top:40px;font-size:13px;color:var(--dim);border-top:1px solid var(--line);padding-top:16px;columns:2;column-gap:40px}
+@media (max-width:1100px){.lab,.ex,.sens{grid-template-columns:1fr}.mast{flex-direction:column;align-items:flex-start}.slots{grid-template-columns:repeat(2,1fr)}.verify{columns:1}}
+</style>
+</head>
+<body>
+<header class="mast">
+  <div>
+    <h1 class="word">NEURAL<i>/</i>LAB</h1>
+    <p class="tag">Exploring the black box of Team 1's weld autoencoder. The published model runs live in this page; every image and number below is its real output.</p>
+  </div>
+  <div>
+    <div class="mode" role="tablist">
+      <button role="tab" aria-selected="true" data-view="defect">Defect experiment</button>
+      <button role="tab" aria-selected="false" data-view="explorer">Neural explorer</button>
+    </div>
+    <div class="status" id="status">Loading the model…</div>
+  </div>
+</header>
+
+<main>
+<!-- ============ DEFECT EXPERIMENT ============ -->
+<section class="view" id="view-defect">
+  <div class="lab">
+    <div>
+      <div class="tools">
+        <select class="btn" id="tilePick" aria-label="Start from a test-weld tile"></select>
+        <button class="btn" id="uploadBtn">Upload a tile…</button><input type="file" id="file" accept="image/*" hidden>
+        <span style="flex:1"></span>
+        <button class="btn" id="undo">Undo</button><button class="btn" id="reset">Reset weld</button>
+      </div>
+      <div class="stagewrap" id="stagewrap">
+        <canvas id="stage" width="640" height="640" aria-label="Weld tile: draw on it"></canvas>
+        <div class="wipe" id="wipe" hidden><span class="l">original</span><span>now</span></div>
+      </div>
+      <div class="under">
+        <div>
+          <label class="ctl">Brush</label>
+          <div class="tools" style="margin:0">
+            <button class="btn on" data-mode="dark">Darken</button><button class="btn" data-mode="light">Lighten</button><button class="btn" data-mode="restore">Restore</button>
+          </div>
+        </div>
+        <div><label class="ctl">Error heatmap on the weld: <span class="num" id="ovV"></span></label><input id="overlay" type="range" min="0" max="100" value="45"></div>
+        <div><label class="ctl">Brush size: <span class="num" id="sizeV"></span></label><input id="size" type="range" min="1" max="10" value="3"></div>
+        <div><label class="ctl">Brush strength: <span class="num" id="strV"></span></label><input id="str" type="range" min="5" max="100" value="45"></div>
+        <div style="grid-column:1/-1"><label class="ctl">Before / after: drag to reveal the original weld on the left: <span class="num" id="wipeV"></span></label><input id="wipeR" type="range" min="0" max="100" value="0"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="readout" id="readout">
+        <div class="k">Anomaly score: mean of the error map</div>
+        <div class="big num" id="score">–</div>
+        <div class="level" id="level">–</div>
+        <div class="delta" id="delta"></div>
+        <div class="scale" id="scale"><div class="orig" id="origMark"></div><div class="mark" id="mark"></div></div>
+        <div class="k">Score while you draw</div>
+        <svg id="spark" viewBox="0 0 300 56" preserveAspectRatio="none"></svg>
+        <p class="caveat">A drawn mark is not a real radiographic defect. The model may flag it or barely react: both outcomes are results, not errors.</p>
+        <p class="small" id="tileInfo"></p>
+        <p class="small" id="match"></p>
+      </div>
+      <div class="triptych">
+        <figure><figcaption>Original tile</figcaption><canvas class="px" id="cOrig" width="64" height="64"></canvas></figure>
+        <figure><figcaption>Model's reconstruction</figcaption><canvas class="px" id="cRec" width="64" height="64"></canvas></figure>
+        <figure><figcaption>Error map</figcaption><canvas class="px" id="cErr" width="64" height="64"></canvas></figure>
+      </div>
+      <div class="legend">0<i></i><span class="num" id="errMax"></span> squared error (same fixed scale as the deployed app)</div>
+    </div>
+  </div>
+
+  <div class="sens">
+    <div>
+      <h2>How sensitive is the network?</h2>
+      <p class="lede small">Put one synthetic defect on 12 real sound test welds, sweep its size or darkness, and plot the score the model actually gives. Shaded band = range over the 12 welds.</p>
+      <label class="ctl">Defect shape</label>
+      <select class="btn" id="sShape" style="width:100%"><option value="pore">Pore (round)</option><option value="crack">Crack (thin diagonal line)</option><option value="band">Band (horizontal, like lack of penetration)</option></select>
+      <label class="ctl" style="margin-top:12px">Sweep</label>
+      <select class="btn" id="sVar" style="width:100%"><option value="size">Size, at fixed darkness</option><option value="dark">Darkness, at fixed size</option></select>
+      <label class="ctl" style="margin-top:12px" id="sFixL"></label><input id="sFix" type="range" min="0" max="100" value="50">
+      <div class="tools" style="margin-top:14px"><button class="btn on" id="sRun">Run experiment</button><button class="btn" id="sCsv" disabled>Download CSV</button><button class="btn" id="sApply">Put on my weld</button></div>
+      <p class="small" id="sNote"></p>
+    </div>
+    <div>
+      <svg id="sensChart" viewBox="0 0 760 360"></svg>
+      <div class="strip" id="strip"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NEURAL EXPLORER ============ -->
+<section class="view" id="view-explorer" hidden>
+  <div class="ex">
+    <div>
+      <h2>Steer the decoder</h2>
+      <p class="lede small">The encoder squeezes your weld into 32 numbers; the decoder redraws it from those numbers alone. Move a number and compare the redraw with the original one.</p>
+      <div class="pair">
+        <figure><figcaption>Your weld</figcaption><canvas class="px" id="eIn" width="64" height="64"></canvas></figure>
+        <figure><figcaption>Redraw, original code</figcaption><canvas class="px" id="eRec0" width="64" height="64"></canvas></figure>
+        <figure><figcaption>Redraw, your code</figcaption><canvas class="px" id="eRec1" width="64" height="64"></canvas></figure>
+      </div>
+      <figure style="margin:12px 0 0"><figcaption class="small">What your changes did: |redraw with your code − redraw with original code|</figcaption>
+        <canvas class="px" id="eDiff" width="64" height="64" style="max-width:200px"></canvas></figure>
+      <p class="small" id="eDiffV"></p>
+      <h2 style="margin-top:28px">Where your weld sits</h2>
+      <p class="small">All 3,019 test tiles, placed by their 32 numbers (first two principal components, <span id="pcaV"></span> of the variance). Ring = your weld; orange = your edited code. Click a dot to load that tile.</p>
+      <canvas id="map" width="800" height="500"></canvas>
+      <div class="key" id="key"></div>
+    </div>
+    <div>
+      <div class="tools"><span class="small" style="align-self:center">Six neurons, preselected by measured influence on the redraw. Change any slot to another neuron.</span><span style="flex:1"></span><button class="btn" id="zReset">Back to original code</button></div>
+      <div class="slots" id="slots"></div>
+      <details class="adv"><summary>Advanced: all 32 numbers</summary><div class="all" id="all"></div></details>
+      <svg id="latBars" viewBox="0 0 640 150" preserveAspectRatio="none"></svg>
+      <div class="key"><span><i style="background:#6c6e74"></i>original code</span><span><i style="background:var(--signal)"></i>your code</span><span class="small">ranges = 1st–99th percentile seen on real test tiles</span></div>
+
+      <div class="maps">
+        <h2>Inside the encoder</h2>
+        <p class="lede small">Real feature maps of your weld, read from the encoder's three blocks (the same tensors as PyTorch forward hooks). Channels are the 8 most active on the original tile, ranked by value only: no meaning is assigned to them. They follow your drawing; the latent sliders do not change them, because they act after the encoder.</p>
+        <div class="tools"><button class="btn on" data-fm="act">Activation</button><button class="btn" data-fm="diff">Change caused by your drawing</button></div>
+        <div id="fmaps"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="verify" id="verify"></div>
+</main>
+
+<script>
+"use strict";
+const N = 64, NN = N * N;
+const HEAT = [[0,0,4],[87,16,110],[188,55,84],[249,142,9],[252,255,164]];
+const CLASS_COL = {no_defect:"#74b083", porosity:"#e2b13c", crack:"#d9534a", lack_of_penetration:"#7aa6e8"};
+const $ = id => document.getElementById(id);
+let cfg, enc, dec, mapPts = [], soundSet = null;
+let weld = null, cur = null, undoStack = [], res = null, res0 = null, history = [], lastLevel = null;
+let zMod = null, slots = [], fmMode = "act", mode = "dark", view = "defect";
+
+/* ---------- colour ---------- */
+function heatRGB(v){ const p=Math.min(Math.max(v,0),1)*(HEAT.length-1), lo=Math.min(Math.floor(p),HEAT.length-2), f=p-lo;
+  return [0,1,2].map(c=>HEAT[lo][c]*(1-f)+HEAT[lo+1][c]*f); }
+function divRGB(v){ // -1..1: blue / graphite / orange
+  const t=Math.min(Math.abs(v),1), base=[27,28,31], tgt=v<0?[90,150,230]:[232,116,44];
+  return base.map((b,i)=>b+(tgt[i]-b)*t); }
+function toImage(arr, kind, scale){
+  const img = new ImageData(N, N);
+  for (let i=0;i<NN;i++){ let rgb;
+    if (kind==="heat") rgb=heatRGB(arr[i]/scale);
+    else if (kind==="div") rgb=divRGB(arr[i]/scale);
+    else { const g=Math.min(Math.max(arr[i],0),1)*255; rgb=[g,g,g]; }
+    img.data[i*4]=rgb[0]; img.data[i*4+1]=rgb[1]; img.data[i*4+2]=rgb[2]; img.data[i*4+3]=255; }
+  return img; }
+function paint(canvas, arr, kind="grey", scale=1){ canvas.getContext("2d").putImageData(toImage(arr,kind,scale),0,0); }
+const SEQ=[[27,28,31],[96,52,34],[232,116,44],[246,224,190]];   // activation: graphite -> orange -> bone
+function seqRGB(v){ const p=Math.min(Math.max(v,0),1)*(SEQ.length-1), lo=Math.min(Math.floor(p),SEQ.length-2), f=p-lo;
+  return [0,1,2].map(c=>SEQ[lo][c]*(1-f)+SEQ[lo+1][c]*f); }
+function paintMap(canvas, data, H, kind, scale){ // any H x H feature map
+  canvas.width=H; canvas.height=H; const img=new ImageData(H,H);
+  for(let i=0;i<H*H;i++){ const rgb = kind==="div"?divRGB(data[i]/scale):seqRGB(data[i]/scale);
+    img.data[i*4]=rgb[0]; img.data[i*4+1]=rgb[1]; img.data[i*4+2]=rgb[2]; img.data[i*4+3]=255; }
+  canvas.getContext("2d").putImageData(img,0,0); }
+
+/* ---------- model ---------- */
+const level = s => s>cfg.t_high?"high":s>cfg.t_low?"check":"low";
+let queue=Promise.resolve();            // one ONNX run at a time (sessions are not re-entrant)
+function serial(fn){ const r=queue.then(fn); queue=r.catch(()=>{}); return r; }
+const infer = x => serial(()=>inferNow(x)), decode = z => serial(()=>decodeNow(z));
+async function inferNow(x){
+  const o = await enc.run({image:new ort.Tensor("float32", x, [1,1,N,N])});
+  const rec = (await dec.run({latent:o.latent}))["reconstruction"].data;
+  const err = new Float32Array(NN); let s=0;
+  for(let i=0;i<NN;i++){ err[i]=(x[i]-rec[i])**2; s+=err[i]; }
+  return {x, rec:Float32Array.from(rec), err, score:s/NN, z:Float32Array.from(o.latent.data),
+          blocks:[o.block1.data,o.block2.data,o.block3.data].map(d=>Float32Array.from(d))};
+}
+async function decodeNow(z){ return Float32Array.from((await dec.run({latent:new ort.Tensor("float32", z, [1,32])}))["reconstruction"].data); }
+
+/* ---------- live loop (one inference in flight; latest state wins) ---------- */
+let busy=false, pending=false;
+async function refresh(){
+  if (busy){ pending=true; return; }
+  busy=true; pending=false;
+  res = await infer(cur.slice());
+  history.push(res.score); if (history.length>240) history.shift();
+  renderDefect();
+  if (view==="explorer") renderExplorer(true);
+  busy=false; if (pending) refresh();
+}
+
+/* ---------- weld loading ---------- */
+async function setWeld(t){
+  weld = t; weld.orig = Float32Array.from(t.x); cur = weld.orig.slice(); undoStack=[]; history=[];
+  res0 = await infer(weld.orig.slice()); res = res0; zMod = res0.z.slice(); lastLevel=null;
+  $("tileInfo").textContent = t.label==="uploaded" ? "Your uploaded image (preprocessed in Python exactly like training)."
+    : `Test weld ${t.weld}, tile ${t.source}, true class ${t.label.replace(/_/g," ")}.`;
+  const ok = Math.abs(res0.score - t.python_score) <= 1e-7 + 1e-3*t.python_score;
+  $("match").innerHTML = `Unedited tile, browser ${res0.score.toFixed(6)} vs Python ${t.python_score.toFixed(6)}: ${ok?"same result ✓":"⚠ differs"}`;
+  $("status").innerHTML = ok ? `Model running in your browser · <b>matches Python ✓</b>` : "⚠ browser and Python differ";
+  paint($("cOrig"), weld.orig);
+  renderDefect(); renderExplorer(); drawMap();
+}
+async function loadTest(id){ setWeld(await (await fetch(`/api/tile/${id}`)).json()); }
+async function loadFile(f){
+  const r = await fetch("/api/preprocess",{method:"POST",body:f}); const t = await r.json();
+  if (t.error){ $("status").textContent = t.error; return; }
+  setWeld(t); $("tilePick").selectedIndex=-1;
+}
+
+/* ---------- DEFECT EXPERIMENT render ---------- */
+const stage=$("stage"), sctx=stage.getContext("2d"), off=document.createElement("canvas"); off.width=off.height=N;
+function renderDefect(){
+  if(!res) return;
+  const W=stage.width, ov=+$("overlay").value/100, wipe=+$("wipeR").value/100;
+  sctx.imageSmoothingEnabled=false;
+  const ox=off.getContext("2d");
+  ox.putImageData(toImage(cur,"grey",1),0,0); sctx.drawImage(off,0,0,W,W);
+  if (ov>0){ ox.putImageData(toImage(res.err,"heat",cfg.error_map_max),0,0); sctx.globalAlpha=ov; sctx.drawImage(off,0,0,W,W); sctx.globalAlpha=1; }
+  if (wipe>0){ const cut=Math.round(W*wipe);
+    ox.putImageData(toImage(weld.orig,"grey",1),0,0); sctx.drawImage(off,0,0,N*wipe,N,0,0,cut,W);
+    $("wipe").hidden=false; $("wipe").style.left=`calc(${wipe*100}% - 1px)`; } else $("wipe").hidden=true;
+  paint($("cRec"),res.rec); paint($("cErr"),res.err,"heat",cfg.error_map_max);
+
+  const s=res.score, L=level(s), R=$("readout");
+  $("score").textContent=s.toFixed(6);
+  $("level").textContent={low:"LOW · looks like a sound weld",check:"CHECK · unusual, inspect",high:"HIGH · strongly abnormal"}[L];
+  $("level").style.color=`var(--${L})`; R.style.borderColor=`var(--${L})`;
+  if (lastLevel && lastLevel!==L){ R.style.setProperty("--glow",getComputedStyle(document.body).getPropertyValue(`--${L}`)); R.classList.remove("flash"); void R.offsetWidth; R.classList.add("flash"); }
+  lastLevel=L;
+  const ratio=s/res0.score;
+  $("delta").innerHTML = cur.every((v,i)=>v===weld.orig[i]) ? `Unedited · ${(s/cfg.threshold).toFixed(1)}× the alarm threshold`
+    : `Original <b class="num">${res0.score.toFixed(6)}</b> → now <b class="num">${s.toFixed(6)}</b> · <b>${ratio>=1?"×"+ratio.toFixed(1):"÷"+(1/ratio).toFixed(1)}</b> · ${(s/cfg.threshold).toFixed(1)}× the alarm threshold`;
+  $("mark").style.left=`calc(${pos(s)}% - 1px)`; $("origMark").style.left=`calc(${pos(res0.score)}% - 1px)`;
+  spark();
+}
+const LOG0=-5, LOG1=-1, pos=s=>100*(Math.log10(Math.max(s,1e-5))-LOG0)/(LOG1-LOG0);
+function spark(){
+  const svg=$("spark"), h=history.length?history:[res.score], n=Math.max(h.length,2);
+  const y=s=>56-56*pos(s)/100, x=i=>300*i/(n-1);
+  const thr=[cfg.t_low,cfg.t_high].map(t=>`<line x1="0" x2="300" y1="${y(t)}" y2="${y(t)}" stroke="${t===cfg.t_low?"#e2b13c":"#d9534a"}" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/>`).join("");
+  svg.innerHTML=thr+`<polyline fill="none" stroke="#ebe8e1" stroke-width="1.6" points="${h.map((s,i)=>`${x(i)},${y(s)}`).join(" ")}"/>`;
+}
+
+/* drawing */
+function brushAt(e){
+  const r=stage.getBoundingClientRect(), cx=(e.clientX-r.left)/r.width*N, cy=(e.clientY-r.top)/r.height*N;
+  const R=+$("size").value, k=+$("str").value/100;
+  for(let y=Math.floor(cy-R);y<=Math.ceil(cy+R);y++) for(let x=Math.floor(cx-R);x<=Math.ceil(cx+R);x++){
+    if(x<0||y<0||x>=N||y>=N) continue;
+    const d=Math.hypot(x+.5-cx,y+.5-cy); if(d>R) continue;
+    const w=k*(1-d/R)**.7, i=y*N+x, tgt=mode==="dark"?0:mode==="light"?1:weld.orig[i];
+    cur[i]+=(tgt-cur[i])*w; }
+  refresh();
+}
+let drawing=false, lastMove=0;
+stage.addEventListener("pointerdown",e=>{ if(!weld) return; drawing=true; undoStack.push(cur.slice()); stage.setPointerCapture(e.pointerId); brushAt(e); });
+stage.addEventListener("pointermove",e=>{ if(!drawing) return; const t=performance.now(); if(t-lastMove<12) return; lastMove=t; brushAt(e); });
+stage.addEventListener("pointerup",()=>drawing=false);
+document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ document.querySelectorAll("[data-mode]").forEach(o=>o.classList.remove("on")); b.classList.add("on"); mode=b.dataset.mode; });
+$("undo").onclick=()=>{ if(undoStack.length){ cur=undoStack.pop(); refresh(); } };
+$("reset").onclick=()=>{ cur=weld.orig.slice(); undoStack=[]; history=[]; refresh(); };
+const lab=()=>{ $("sizeV").textContent=$("size").value+" px"; $("strV").textContent=$("str").value+"%"; $("ovV").textContent=$("overlay").value+"%"; $("wipeV").textContent=$("wipeR").value+"%"; };
+["size","str"].forEach(id=>$(id).oninput=lab); ["overlay","wipeR"].forEach(id=>$(id).oninput=()=>{lab();renderDefect();}); lab();
+$("uploadBtn").onclick=()=>$("file").click(); $("file").onchange=e=>e.target.files[0]&&loadFile(e.target.files[0]);
+const sw=$("stagewrap");
+sw.addEventListener("dragover",e=>{e.preventDefault();sw.classList.add("drop");}); sw.addEventListener("dragleave",()=>sw.classList.remove("drop"));
+sw.addEventListener("drop",e=>{e.preventDefault();sw.classList.remove("drop"); if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);});
+
+/* ---------- sensitivity experiment (real inference on 12 sound test welds) ---------- */
+const SHAPES={ pore:{size:[1,12],unit:"radius px"}, crack:{size:[0.5,6],unit:"width px"}, band:{size:[1,16],unit:"height px"} };
+function weight(shape,size,x,y){ const soft=v=>Math.min(Math.max(v,0),1);
+  if(shape==="pore") return soft(size+.5-Math.hypot(x+.5-32,y+.5-32));
+  if(shape==="band") return soft(size/2+.5-Math.abs(y+.5-32));
+  const ax=12,ay=52,bx=52,by=12,dx=bx-ax,dy=by-ay, px=x+.5, py=y+.5;              // crack: segment
+  const t=Math.min(Math.max(((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy),0),1);
+  return soft(size/2+.5-Math.hypot(px-(ax+t*dx),py-(ay+t*dy))); }
+function withDefect(x,shape,size,dark){ const o=new Float32Array(NN);
+  for(let y=0;y<N;y++) for(let xx=0;xx<N;xx++){ const i=y*N+xx; o[i]=x[i]*(1-dark*weight(shape,size,xx,y)); } return o; }
+function sensParams(){ const shape=$("sShape").value, v=$("sVar").value, f=+$("sFix").value/100, [a,b]=SHAPES[shape].size;
+  const steps=[...Array(10)].map((_,i)=>i/9);
+  return v==="size" ? {shape,v,dark:.15+.8*f,sizes:steps.map(t=>a+(b-a)*t),label:`${shape} ${SHAPES[shape].unit}`}
+                    : {shape,v,size:a+(b-a)*f,darks:steps.map(t=>.05+.9*t),label:"darkness (0 = invisible, 1 = black)"}; }
+function sensFixLabel(){ const p=sensParams(); $("sFixL").textContent = p.v==="size" ? `Fixed darkness: ${p.dark.toFixed(2)}` : `Fixed size: ${p.size.toFixed(1)} ${SHAPES[p.shape].unit}`; }
+["sShape","sVar","sFix"].forEach(id=>$(id).addEventListener("input",sensFixLabel));
+let sensRows=[];
+$("sRun").onclick=async()=>{
+  if(!soundSet) soundSet=await (await fetch("/api/sound_set")).json();
+  const p=sensParams(), xs=p.v==="size"?p.sizes:p.darks; sensRows=[]; $("sCsv").disabled=true;
+  const strip=$("strip"); strip.innerHTML="";
+  for(let k=0;k<xs.length;k++){
+    const size=p.v==="size"?xs[k]:p.size, dark=p.v==="size"?p.dark:xs[k], scores=[];
+    for(const t of soundSet){ scores.push((await infer(withDefect(Float32Array.from(t.x),p.shape,size,dark))).score); }
+    sensRows.push({param:xs[k],size,dark,scores});
+    const c=document.createElement("canvas"); c.width=c.height=N; paint(c,withDefect(Float32Array.from(soundSet[0].x),p.shape,size,dark)); strip.appendChild(c);
+    $("sNote").textContent=`Running… ${k+1}/${xs.length} (${(k+1)*soundSet.length} inferences)`;
+    drawSens(p);
+  }
+  const flagged=sensRows.map(r=>r.scores.filter(s=>s>cfg.threshold).length);
+  $("sNote").textContent=`Done: ${xs.length*soundSet.length} real inferences. Welds above the alarm threshold per step: ${flagged.join(", ")} (of ${soundSet.length}).`;
+  $("sCsv").disabled=false;
+};
+function drawSens(p){
+  const svg=$("sensChart"), W=760,H=360,L=70,Rm=170,T=16,B=48, xs=sensRows.map(r=>r.param);
+  const all=p.v==="size"?p.sizes:p.darks, x0=all[0], x1=all[all.length-1];
+  const X=v=>L+(W-L-Rm)*(v-x0)/(x1-x0), Y=s=>T+(H-T-B)*(1-pos(s)/100);
+  let g="";
+  for(const e of [-5,-4,-3,-2,-1]) g+=`<line x1="${L}" x2="${W-Rm}" y1="${Y(10**e)}" y2="${Y(10**e)}" stroke="#36383e"/><text x="${L-8}" y="${Y(10**e)+4}" fill="#9a9ba0" font-size="11" text-anchor="end">1e${e}</text>`;
+  g+=`<line x1="${L}" x2="${W-Rm}" y1="${Y(cfg.t_low)}" y2="${Y(cfg.t_low)}" stroke="#e2b13c" stroke-dasharray="4 4"/><text x="${W-Rm-4}" y="${Y(cfg.t_low)-5}" fill="#e2b13c" font-size="11" text-anchor="end">check</text>`;
+  g+=`<line x1="${L}" x2="${W-Rm}" y1="${Y(cfg.t_high)}" y2="${Y(cfg.t_high)}" stroke="#d9534a" stroke-dasharray="4 4"/><text x="${W-Rm-4}" y="${Y(cfg.t_high)-5}" fill="#d9534a" font-size="11" text-anchor="end">high</text>`;
+  if(sensRows.length){
+    const lo=sensRows.map(r=>Math.min(...r.scores)), hi=sensRows.map(r=>Math.max(...r.scores)), mid=sensRows.map(r=>r.scores.reduce((a,b)=>a+b)/r.scores.length);
+    g+=`<polygon fill="#e8742c" opacity=".18" points="${xs.map((v,i)=>`${X(v)},${Y(hi[i])}`).join(" ")} ${xs.map((v,i)=>`${X(v)},${Y(lo[i])}`).reverse().join(" ")}"/>`;
+    g+=`<polyline fill="none" stroke="#e8742c" stroke-width="2.2" points="${xs.map((v,i)=>`${X(v)},${Y(mid[i])}`).join(" ")}"/>`;
+    g+=xs.map((v,i)=>`<circle cx="${X(v)}" cy="${Y(mid[i])}" r="3.5" fill="#e8742c"/>`).join("");
+  }
+  // real defects in the test welds: interquartile range of their actual scores
+  [["porosity","pores"],["crack","cracks"],["lack_of_penetration","lack of pen."],["no_defect","sound"]].forEach(([c,name],j)=>{
+    const [q1,q2,q3]=cfg.class_scores[c], x=W-Rm+28+j*36;
+    g+=`<line x1="${x}" x2="${x}" y1="${Y(q1)}" y2="${Y(q3)}" stroke="${CLASS_COL[c]}" stroke-width="7" stroke-linecap="round"/><circle cx="${x}" cy="${Y(q2)}" r="4" fill="#1b1c1f" stroke="${CLASS_COL[c]}" stroke-width="2"/>
+          <text x="${x}" y="${H-B+16}" fill="#9a9ba0" font-size="10" text-anchor="middle" transform="rotate(-30 ${x} ${H-B+16})">${name}</text>`; });
+  g+=`<text x="${W-Rm+70}" y="${T+4}" fill="#9a9ba0" font-size="11" text-anchor="middle">real test tiles (IQR)</text>`;
+  g+=`<text x="${(L+W-Rm)/2}" y="${H-10}" fill="#9a9ba0" font-size="12" text-anchor="middle">${p.label}</text><text x="16" y="${(T+H-B)/2}" fill="#9a9ba0" font-size="12" text-anchor="middle" transform="rotate(-90 16 ${(T+H-B)/2})">anomaly score (log)</text>`;
+  xs.forEach(v=>g+=`<text x="${X(v)}" y="${H-B+16}" fill="#6c6e74" font-size="10" text-anchor="middle">${v.toFixed(v<10?1:0)}</text>`);
+  svg.innerHTML=g;
+}
+$("sCsv").onclick=()=>{ const p=sensParams();
+  const rows=[["shape","size","darkness","weld_tile_id","score"]];
+  sensRows.forEach(r=>r.scores.forEach((s,i)=>rows.push([p.shape,r.size.toFixed(3),r.dark.toFixed(3),soundSet[i].id,s.toExponential(6)])));
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"}));
+  a.download=`sensitivity_${p.shape}_${p.v}.csv`; a.click(); };
+$("sApply").onclick=()=>{ const p=sensParams(), size=p.v==="size"?p.sizes[6]:p.size, dark=p.v==="size"?p.dark:p.darks[6];
+  undoStack.push(cur.slice()); cur=withDefect(cur,p.shape,size,dark); refresh(); window.scrollTo({top:0,behavior:"smooth"}); };
+
+/* ---------- NEURAL EXPLORER ---------- */
+const rank = () => [...Array(32).keys()].sort((a,b)=>cfg.influence[b]-cfg.influence[a]);
+function buildExplorer(){
+  slots = rank().slice(0,6);
+  const box=$("slots"); box.innerHTML="";
+  slots.forEach((d,k)=>{ const el=document.createElement("div"); el.className="slot"; el.id=`slot${k}`;
+    el.innerHTML=`<header><select aria-label="Neuron in slot ${k+1}">${rank().map(j=>`<option value="${j}" ${j===d?"selected":""}>z${j}</option>`).join("")}</select><span class="infl" id="infl${k}"></span></header>
+      <input type="range" id="sr${k}"><div class="vals"><span>original <span class="num" id="o${k}"></span></span><span>now <b class="num" id="n${k}"></b></span></div>`;
+    box.appendChild(el);
+    el.querySelector("select").onchange=e=>{ slots[k]=+e.target.value; syncSlots(); };
+    el.querySelector("input").oninput=e=>{ zMod[slots[k]]=+e.target.value; onLatent(); }; });
+  const all=$("all"); all.innerHTML="";
+  for(let d=0;d<32;d++){ const el=document.createElement("div"); el.className="s"; el.id=`as${d}`;
+    el.innerHTML=`z${d} <span class="num" id="av${d}"></span><input type="range" id="ar${d}" min="${cfg.latent_lo[d]}" max="${cfg.latent_hi[d]}" step="${(cfg.latent_hi[d]-cfg.latent_lo[d])/400}">`;
+    all.appendChild(el); el.querySelector("input").oninput=e=>{ zMod[d]=+e.target.value; onLatent(); }; }
+  const key=$("key"); key.innerHTML=Object.entries(CLASS_COL).map(([c,col])=>`<span><i style="background:${col}"></i>${c.replace(/_/g," ")}</span>`).join("");
+  $("pcaV").textContent=`${Math.round(100*(cfg.pca_explained[0]+cfg.pca_explained[1]))}%`;
+  document.querySelectorAll("[data-fm]").forEach(b=>b.onclick=()=>{ document.querySelectorAll("[data-fm]").forEach(o=>o.classList.remove("on")); b.classList.add("on"); fmMode=b.dataset.fm; renderMaps(); });
+  $("zReset").onclick=()=>{ zMod=res.z.slice(); onLatent(); };
+}
+function syncSlots(){
+  slots.forEach((d,k)=>{ const s=$(`sr${k}`); s.min=cfg.latent_lo[d]; s.max=cfg.latent_hi[d]; s.step=(cfg.latent_hi[d]-cfg.latent_lo[d])/400; s.value=zMod[d];
+    $(`infl${k}`).textContent=`influence ${cfg.influence[d].toFixed(4)}`;
+    $(`o${k}`).textContent=res.z[d].toFixed(1); $(`n${k}`).textContent=zMod[d].toFixed(1);
+    $(`slot${k}`).classList.toggle("moved", Math.abs(zMod[d]-res.z[d])>1e-6);
+    $(`slot${k}`).querySelector("select").value=d; });
+  for(let d=0;d<32;d++){ $(`ar${d}`).value=zMod[d]; $(`av${d}`).textContent=zMod[d].toFixed(1); $(`as${d}`).classList.toggle("moved",Math.abs(zMod[d]-res.z[d])>1e-6); }
+}
+let decBusy=false, decAgain=false;
+async function onLatent(){
+  syncSlots(); latBars(); drawMap();
+  if(decBusy){ decAgain=true; return; } decBusy=true; decAgain=false;
+  const rec1=await decode(zMod); paint($("eRec1"),rec1);
+  const diff=new Float32Array(NN); let m=0; for(let i=0;i<NN;i++){ diff[i]=Math.abs(rec1[i]-res.rec[i]); m+=diff[i]; }
+  paint($("eDiff"),diff,"heat",0.15);
+  $("eDiffV").textContent = m===0 ? "No change yet: move a slider." : `Mean pixel change ${(m/NN).toFixed(4)} (heat scale 0–0.15). Changed numbers: ${[...Array(32).keys()].filter(d=>Math.abs(zMod[d]-res.z[d])>1e-6).map(d=>"z"+d).join(", ")}`;
+  decBusy=false; if(decAgain) onLatent();
+}
+function renderExplorer(fromDrawing){
+  if(!res) return;
+  if(fromDrawing || !zMod || zMod.every((v,i)=>v===res0.z[i])) zMod=res.z.slice(); // follow the drawing until the user steers
+  paint($("eIn"),res.x); paint($("eRec0"),res.rec); onLatent(); renderMaps();
+}
+function latBars(){
+  const svg=$("latBars"), W=640,H=150, bw=W/32, Y=(d,v)=>H/2-(v/Math.max(Math.abs(cfg.latent_lo[d]),Math.abs(cfg.latent_hi[d]),1))*(H/2-8);
+  let g=`<line x1="0" x2="${W}" y1="${H/2}" y2="${H/2}" stroke="#36383e"/>`;
+  for(let d=0;d<32;d++){ const x=d*bw, a=res.z[d], b=zMod[d], moved=Math.abs(a-b)>1e-6;
+    g+=`<rect x="${x+2}" width="${bw/2-2}" y="${Math.min(Y(d,a),H/2)}" height="${Math.abs(Y(d,a)-H/2)}" fill="#6c6e74"/>`;
+    g+=`<rect x="${x+bw/2}" width="${bw/2-2}" y="${Math.min(Y(d,b),H/2)}" height="${Math.abs(Y(d,b)-H/2)}" fill="${moved?"#e8742c":"#8d6a50"}"/>`;
+    if(d%4===0) g+=`<text x="${x+2}" y="${H-2}" fill="#6c6e74" font-size="9">z${d}</text>`; }
+  svg.innerHTML=g;
+}
+function renderMaps(){
+  if(!res||!res0) return;
+  const shapes=[[32,32],[64,16],[128,8]], box=$("fmaps"); box.innerHTML="";
+  shapes.forEach(([C,H],k)=>{ const A=res.blocks[k], O=res0.blocks[k], HH=H*H;
+    const means=[...Array(C).keys()].map(c=>{let s=0;for(let i=0;i<HH;i++)s+=O[c*HH+i];return s/HH;});
+    const top=[...Array(C).keys()].sort((a,b)=>means[b]-means[a]).slice(0,8);
+    let scale=1e-6; top.forEach(c=>{for(let i=0;i<HH;i++){ const v=fmMode==="act"?A[c*HH+i]:A[c*HH+i]-O[c*HH+i]; scale=Math.max(scale,Math.abs(v)); }});
+    const row=document.createElement("div"); row.className="maprow";
+    row.innerHTML=`<div class="rl">block ${k+1}<br>${C} ch · ${H}×${H}<br><span class="num">scale ${scale.toFixed(2)}</span></div>`;
+    top.forEach(c=>{ const cv=document.createElement("canvas"), arr=new Float32Array(HH);
+      for(let i=0;i<HH;i++) arr[i]=fmMode==="act"?A[c*HH+i]:A[c*HH+i]-O[c*HH+i];
+      paintMap(cv,arr,H,fmMode==="act"?"act":"div",scale); const w=document.createElement("div"); w.appendChild(cv);
+      w.insertAdjacentHTML("beforeend",`<div class="ch">ch ${c}</div>`); row.appendChild(w); });
+    box.appendChild(row); });
+}
+/* latent map */
+const mapC=$("map"), mctx=mapC.getContext("2d"); let mapBox=null;
+function project(z){ const m=cfg.pca_mean, P=cfg.pca_components; let a=0,b=0;
+  for(let d=0;d<32;d++){ const v=z[d]-m[d]; a+=v*P[0][d]; b+=v*P[1][d]; } return [a,b]; }
+function drawMap(){
+  if(!mapPts.length||!res) return;
+  const W=mapC.width,H=mapC.height,p=24;
+  if(!mapBox){ const xs=mapPts.map(q=>q.x), ys=mapPts.map(q=>q.y); mapBox=[Math.min(...xs),Math.max(...xs),Math.min(...ys),Math.max(...ys)]; }
+  const [x0,x1,y0,y1]=mapBox, X=v=>p+(W-2*p)*(v-x0)/(x1-x0), Y=v=>H-p-(H-2*p)*(v-y0)/(y1-y0);
+  mctx.fillStyle="#16171a"; mctx.fillRect(0,0,W,H);
+  for(const q of mapPts){ mctx.fillStyle=CLASS_COL[q.label]; mctx.globalAlpha=.55; mctx.fillRect(X(q.x)-1.5,Y(q.y)-1.5,3,3); }
+  mctx.globalAlpha=1;
+  const [a,b]=project(res.z); mctx.strokeStyle="#ebe8e1"; mctx.lineWidth=2.5; mctx.beginPath(); mctx.arc(X(a),Y(b),9,0,7); mctx.stroke();
+  if(zMod && zMod.some((v,i)=>Math.abs(v-res.z[i])>1e-6)){ const [c,d]=project(zMod);
+    mctx.strokeStyle="#e8742c"; mctx.setLineDash([4,4]); mctx.beginPath(); mctx.moveTo(X(a),Y(b)); mctx.lineTo(X(c),Y(d)); mctx.stroke(); mctx.setLineDash([]);
+    mctx.fillStyle="#e8742c"; mctx.beginPath(); mctx.arc(X(c),Y(d),6,0,7); mctx.fill(); }
+  mapC.onclick=e=>{ const r=mapC.getBoundingClientRect(), mx=(e.clientX-r.left)/r.width*W, my=(e.clientY-r.top)/r.height*H;
+    let best=-1,bd=1e9; mapPts.forEach((q,i)=>{const dd=(X(q.x)-mx)**2+(Y(q.y)-my)**2; if(dd<bd){bd=dd;best=i;}});
+    if(bd<100) loadTest(best); };
+}
+
+/* ---------- views ---------- */
+document.querySelectorAll(".mode button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".mode button").forEach(o=>o.setAttribute("aria-selected", o===b)); view=b.dataset.view;
+  $("view-defect").hidden=view!=="defect"; $("view-explorer").hidden=view!=="explorer";
+  if(view==="explorer") renderExplorer(); });
+
+/* ---------- start ---------- */
+(async()=>{
+  try{
+    ort.env.wasm.numThreads=1;
+    cfg=await (await fetch("/api/config")).json();
+    [enc,dec]=await Promise.all([ort.InferenceSession.create("/models/encoder.onnx"),ort.InferenceSession.create("/models/decoder.onnx")]);
+    const sc=$("scale"); sc.style.setProperty("--a",pos(cfg.t_low)+"%"); sc.style.setProperty("--b",pos(cfg.t_high)+"%");
+    sc.insertAdjacentHTML("beforeend",`<span class="tick" style="left:${pos(cfg.t_low)}%">check ${cfg.t_low.toFixed(5)}</span><span class="tick" style="left:${pos(cfg.t_high)}%">high ${cfg.t_high.toFixed(5)}</span>`);
+    $("errMax").textContent=cfg.error_map_max;
+    const sel=$("tilePick"); let grp=null,og;
+    cfg.catalogue.forEach(t=>{ if(t.label!==grp){grp=t.label; og=document.createElement("optgroup"); og.label=grp.replace(/_/g," "); sel.appendChild(og);}
+      const o=document.createElement("option"); o.value=t.id; o.textContent=`${t.label.replace(/_/g," ")} · ${t.pick} · ${t.score.toFixed(5)}`; og.appendChild(o); });
+    sel.onchange=()=>loadTest(sel.value);
+    const c=cfg.checks;
+    $("verify").innerHTML=`<b style="color:var(--bone)">How this page is checked.</b> Model: Team 1's published ConvAE(64, 32), weights from Hugging Face, not retrained.
+      The browser runs the encoder and decoder as two ONNX files exported from those weights: on all 3,019 test tiles they differ from the deployed ONNX model by at most ${c.halves_vs_deployed_onnx.toExponential(1)} and from PyTorch by ${c.halves_vs_pytorch.toExponential(1)}; the block feature maps differ from PyTorch forward hooks by ${c.taps_vs_hooks.toExponential(1)}.
+      Tiles are preprocessed in Python exactly like training (greyscale, 64×64 bilinear, ÷255). Thresholds and the error-map scale are the deployed app's.
+      Neuron influence = ${cfg.influence_rule}. Slider ranges = ${cfg.latent_range_rule}. Latent map = PCA of the encoder outputs of the test tiles.
+      Data: RIAWELC (Totino, Spagnolo, Perri, ICMECE 2022; Perri et al., Manufacturing Letters), used locally and not redistributed.`;
+    buildExplorer(); sensFixLabel(); drawSens(sensParams());
+    mapPts=await (await fetch("/api/map")).json();
+    const start=cfg.catalogue.find(t=>t.label==="no_defect"&&t.pick==="median"); sel.value=start.id; await loadTest(start.id);
+  }catch(err){ $("status").textContent="Error: "+err; console.error(err); }
+})();
+</script>
+</body>
+</html>

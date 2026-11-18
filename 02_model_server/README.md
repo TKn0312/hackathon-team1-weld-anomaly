@@ -1,10 +1,16 @@
 # Weld X-ray anomaly detector: model server
 
-The model server of Team 1's hackathon project (AI Methods I, IAAC MaAI 2026/27). It runs our autoencoder online and answers in two ways:
-- **a page for people:** upload an X-ray tile of a weld, see its risk level and where to look;
-- **an API for programs** (`/predict`): send an image, get JSON back. The Cloudflare web app uses it.
+The model server of Team 1's hackathon project (AI Methods I, IAAC MaAI 2026/27). One Render service, three things:
 
-**Live:** https://hackathon-team1-weld-anomaly.onrender.com (free Render service: it sleeps after 15 minutes without requests, and the first request then takes about a minute)
+| Address | What |
+|---|---|
+| **https://hackathon-team1-weld-anomaly.onrender.com** | **NEURAL / LAB** (Sahil's lab, `neural_lab/`): draw a defect on a real weld and watch the network react live, the architecture, the latent universe, a 90-second demo. The model runs **in the browser** |
+| **…/gradio** | The tile app: upload an X-ray tile, see its risk level and where to look |
+| **…/gradio** + `/predict` API | For programs: send an image, get JSON back. The Cloudflare web app uses it (`MODEL_URL` = `https://hackathon-team1-weld-anomaly.onrender.com/gradio`) |
+
+Free Render service: it sleeps after 15 minutes without requests, and the first request then takes about a minute.
+
+**The lab online:** `build_lab.py` packs it once on a laptop into `lab/`: the page (copied from `neural_lab/playground/static`), the model split into encoder and decoder ONNX files, the PCA map, and **115 test tiles at 64 px** (not the dataset, which must not be re-published). A click on another point of the map loads the nearest packed tile of the same class. Re-run `python 02_model_server/build_lab.py` after changing `neural_lab/`.
 **Model on Hugging Face:** [iaac-maai/hackathon-team1-weld-anomaly-ae](https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae)
 **How it was made:** [../01_autoencoder/](../01_autoencoder/) (notebook, comparison of setups, figures)
 
@@ -49,15 +55,15 @@ The model server of Team 1's hackathon project (AI Methods I, IAAC MaAI 2026/27)
 import base64
 from gradio_client import Client
 
-client = Client("https://hackathon-team1-weld-anomaly.onrender.com")
+client = Client("https://hackathon-team1-weld-anomaly.onrender.com/gradio")
 image_b64 = base64.b64encode(open("weld_tile.png", "rb").read()).decode()
 result = client.predict(image_b64, api_name="/predict")
 print(result["risk_level"], result["score"])
 ```
 
 Over plain HTTP, which is what the Cloudflare app does:
-1. `POST /gradio_api/call/predict` with `{"data": ["<base64 image>"]}` returns an `event_id`.
-2. `GET /gradio_api/call/predict/<event_id>` returns the result after the line `event: complete`.
+1. `POST /gradio/gradio_api/call/predict` with `{"data": ["<base64 image>"]}` returns an `event_id`.
+2. `GET /gradio/gradio_api/call/predict/<event_id>` returns the result after the line `event: complete`.
 
 `call_server.py` does both, and first wakes the server up if it is asleep:
 

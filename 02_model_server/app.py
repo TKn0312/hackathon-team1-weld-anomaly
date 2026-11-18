@@ -145,6 +145,74 @@ with gr.Blocks(title="Weld X-ray anomaly detector") as demo:
                  api_visibility="private")
     gr.api(predict, api_name="predict")
 
+# ---- NEURAL / LAB (Sahil's lab, neural_lab/) at the main address ------------------------------------
+# The lab runs the model in the browser (two ONNX halves); the server only hands out files, a small set of
+# test tiles (64 px, packed by build_lab.py) and the preprocessing of uploads. Our Gradio app moves to /gradio.
+import uvicorn
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+LAB = HERE / "lab"
+app = FastAPI(title="Weld X-ray anomaly detector")
+
+if (LAB / "static" / "index.html").exists():
+    _lab_cfg = json.loads((LAB / "data" / "config.json").read_text())
+    _lab_meta = json.loads((LAB / "data" / "tiles.json").read_text())
+    _npz = np.load(LAB / "data" / "tiles.npz")
+    _lab_px = {int(i): p for i, p in zip(_npz["ids"], _npz["pixels"])}
+    _map = json.loads((LAB / "data" / "map.json").read_text())
+    _xyz = np.array([[p["x"], p["y"], p["z"]] for p in _map], np.float32)
+    _labels = np.array([p["label"] for p in _map])
+    _have = np.array(sorted(_lab_px))
+
+    def _lab_tile(i: int) -> dict:
+        if i not in _lab_px:                     # not packed: the nearest packed tile of the SAME class on the map
+            same = _have[_labels[_have] == _labels[i]]
+            i = int(same[np.argmin(((_xyz[same] - _xyz[i]) ** 2).sum(axis=1))])
+        x = _lab_px[i].astype(np.float32) / 255.0
+        return {"id": i, **_lab_meta["tiles"][str(i)], "x": x.ravel().round(6).tolist()}
+
+    @app.get("/api/config")
+    def lab_config():
+        return _lab_cfg
+
+    @app.get("/api/map")
+    def lab_map():
+        return FileResponse(LAB / "data" / "map.json", media_type="application/json")
+
+    @app.get("/api/tile/{i}")
+    def lab_tile(i: int):
+        if not 0 <= i < len(_map):
+            return JSONResponse({"error": "no such tile"}, status_code=404)
+        return _lab_tile(i)
+
+    @app.get("/api/sound_set")
+    def lab_sound_set():
+        return [{"id": i, "x": _lab_tile(i)["x"], "score": _lab_meta["tiles"][str(i)]["score"]} for i in _lab_meta["sound_set"]]
+
+    @app.post("/api/preprocess")
+    async def lab_preprocess(request: Request):
+        body = await request.body()
+        if not 0 < len(body) <= 15 * 1024 * 1024:
+            return JSONResponse({"error": "empty or too large"}, status_code=400)
+        try:
+            x = preprocess(Image.open(io.BytesIO(body)))
+        except Exception as err:  # noqa: BLE001
+            return JSONResponse({"error": f"could not read image: {err}"}, status_code=400)
+        score = float(((session.run(None, {INPUT_NAME: x})[0] - x) ** 2).mean())
+        return {"label": "uploaded", "weld": "–", "source": "your file", "x": x.ravel().round(6).tolist(), "python_score": score}
+
+    @app.get("/models/{name}")
+    def lab_model(name: str):
+        if name not in ("encoder.onnx", "decoder.onnx"):
+            return JSONResponse({"error": "not found"}, status_code=404)
+        return FileResponse(LAB / "models" / name, media_type="application/octet-stream")
+
+app = gr.mount_gradio_app(app, demo, path="/gradio")          # our tile app + its /predict API
+if (LAB / "static" / "index.html").exists():
+    app.mount("/", StaticFiles(directory=LAB / "static", html=True), name="lab")   # last: the lab page itself
+
 if __name__ == "__main__":
     # Render (and most hosts) tell the app which port to use in the PORT variable; locally it is 7860
-    demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)))
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 7860)))

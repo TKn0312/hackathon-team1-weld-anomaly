@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NEURAL / LAB — Exploring the Black Box</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
+<style>
+:root{
+  --void:#09090a; --ink:#121213; --rule:#26241f; --ivory:#efe8da; --sand:#9b9488; --ash:#5f5a52;
+  --ember:#e8742c; --low:#8fb996; --check:#e2b13c; --high:#e0604f;
+  --serif:"Instrument Serif", "Times New Roman", serif; --sans:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--void);color:var(--ivory);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ember);outline-offset:3px}
+.num{font-variant-numeric:tabular-nums}
+
+/* masthead */
+.top{display:flex;align-items:center;gap:28px;padding:22px 48px;border-bottom:1px solid var(--rule)}
+.wm{font-family:var(--serif);font-size:30px;letter-spacing:.5px;margin:0;white-space:nowrap}
+.wm em{color:var(--ember);font-style:italic;padding:0 .08em}
+nav.rooms{display:flex;gap:4px;margin-left:auto;align-items:center}
+nav.rooms a{color:var(--sand);text-decoration:none;padding:8px 14px;border-radius:999px;font-size:14px}
+nav.rooms a[aria-current=page]{color:var(--void);background:var(--ivory)}
+nav.rooms a.later{opacity:.45;pointer-events:none}
+.top .st{font-size:13px;color:var(--sand);white-space:nowrap}
+.top .st b{color:var(--low);font-weight:500}
+
+/* room head */
+.head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:end;padding:56px 48px 8px}
+.head h2{font-family:var(--serif);font-weight:400;font-size:clamp(44px,5.4vw,80px);line-height:.95;letter-spacing:-1px;margin:0;max-width:20ch}
+.head h2 i{color:var(--ember)}
+.head p{color:var(--sand);max-width:58ch;margin:18px 0 0}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.btn{background:transparent;border:1px solid var(--rule);border-radius:999px;padding:9px 16px;cursor:pointer;color:var(--ivory)}
+.btn:hover{border-color:var(--sand)}
+select.btn{max-width:300px;background:var(--void)}
+
+/* the sculpture */
+.scene{position:relative;margin:28px 0 0;padding:40px 48px 20px;overflow-x:auto;--ry:-30deg;--rx:12deg}
+#flows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.flow{fill:none;stroke:var(--ash);stroke-width:1.2;stroke-dasharray:2 6}
+.flow.pulse{animation:pulse 900ms ease-out var(--d) 1 both}
+@keyframes pulse{0%{stroke:var(--ash)}35%{stroke:var(--ember);stroke-width:2}100%{stroke:var(--ash)}}
+.rail{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;min-width:1260px}
+.station{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:8px 4px;cursor:pointer;
+  animation:enter 900ms cubic-bezier(.2,.7,.2,1) calc(var(--i) * 90ms) both}
+@keyframes enter{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.stack{position:relative;width:var(--w);height:var(--w);perspective:900px;margin-bottom:34px}
+.stack .plane{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;border:1px solid #ffffff14;
+  transform:rotateX(var(--rx)) rotateY(var(--ry)) translate3d(calc(var(--j) * 9px), calc(var(--j) * -9px), calc(var(--j) * -34px));
+  transition:transform .5s cubic-bezier(.2,.7,.2,1);opacity:calc(1 - var(--j) * .13);box-shadow:0 18px 40px #000a;z-index:calc(10 - var(--j))}
+.station:hover .plane{transform:rotateX(var(--rx)) rotateY(var(--ry)) translate3d(calc(var(--j) * 16px), calc(var(--j) * -16px), calc(var(--j) * -56px))}
+.st-out .plane[style*="--j:1"]{opacity:.9}
+.station .nm{font-family:var(--serif);font-size:22px;line-height:1}
+.station .dims{font-size:12px;color:var(--sand)}
+.station .act{font-size:12px;color:var(--sand);min-height:18px}
+.station .strip{width:96px;height:22px;image-rendering:pixelated}
+.station .strip-gap{height:22px}
+.station.steered .nm{color:var(--ember)}
+.station:hover .nm{text-decoration:underline;text-decoration-color:var(--ember);text-underline-offset:5px}
+
+/* latent spine */
+.latent{display:grid;grid-template-columns:repeat(16,9px);grid-template-rows:repeat(2,118px);gap:10px 4px;margin-bottom:12px;cursor:ns-resize}
+.zb{position:relative;background:#1b1a18;border-radius:2px;touch-action:none}
+.zb .fill{position:absolute;left:0;right:0;background:var(--sand);border-radius:1px}
+.zb.moved .fill{background:var(--ember)}
+.zb .orig{position:absolute;left:-3px;right:-3px;height:2px;background:var(--ivory);opacity:0;transform:translateY(1px)}
+.zb.moved .orig{opacity:.9}
+.zb:hover{background:#26241f}
+
+/* readline */
+.readline{display:grid;grid-template-columns:auto auto 1fr auto;gap:28px;align-items:center;margin:8px 48px 0;padding:22px 0;border-top:1px solid var(--rule)}
+.readline .k{font-size:12px;color:var(--sand)}
+#rlScore{font-family:var(--serif);font-size:48px;line-height:1}
+#rlLevel{font-family:var(--serif);font-style:italic;font-size:48px;line-height:1;transition:color .4s}
+#rlLevel[data-level=low]{color:var(--low)} #rlLevel[data-level=check]{color:var(--check)} #rlLevel[data-level=high]{color:var(--high)}
+#rlSteer{color:var(--sand);max-width:64ch}
+#rlSteer b{color:var(--ember);font-weight:500}
+.honest{font-size:13px;color:var(--ash);margin:0 48px 60px;max-width:110ch}
+
+/* inspector drawer */
+#drawer{position:fixed;left:0;right:0;bottom:0;max-height:62vh;overflow:auto;background:var(--ink);border-top:1px solid var(--rule);
+  transform:translateY(102%);transition:transform .45s cubic-bezier(.2,.7,.2,1);padding:26px 48px 40px;z-index:50;box-shadow:0 -30px 60px #000c}
+#drawer.open{transform:none}
+#drawer header{display:flex;align-items:baseline;gap:20px}
+#drName{font-family:var(--serif);font-size:40px;margin:0}
+#drOp{color:var(--sand);margin:6px 0 0}
+#drawerClose{margin-left:auto}
+.note{color:var(--sand);font-size:13px;max-width:100ch}
+.chgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:10px}
+.chgrid figure{margin:0}.chgrid canvas{width:100%;aspect-ratio:1;image-rendering:pixelated;display:block}
+.chgrid figcaption{font-size:10px;color:var(--ash);margin-top:2px}
+.big3{display:flex;gap:20px}.big3 figure{margin:0}.big3 canvas{width:260px;aspect-ratio:1;image-rendering:pixelated}
+.big3 figcaption{font-size:12px;color:var(--sand)}
+.ztab{border-collapse:collapse;width:100%;max-width:720px;font-size:13px}
+.ztab th{text-align:left;color:var(--sand);font-weight:500;padding:4px 10px 4px 0}
+.ztab td{padding:3px 10px 3px 0;border-top:1px solid var(--rule)}
+.ztab td i{display:inline-block;height:6px;background:var(--sand);margin-right:8px;vertical-align:1px}
+.ztab tr.moved td{color:var(--ember)}
+
+
+/* rooms */
+.room[hidden]{display:none}
+body{transition:background-color .8s}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:0;transition:opacity .8s,background .8s;
+  background:radial-gradient(1200px 600px at 75% 30%,var(--glow),transparent 70%)}
+body[data-level=low]{--glow:#8fb99614} body[data-level=check]{--glow:#e2b13c1c} body[data-level=high]{--glow:#e0604f24}
+body[data-room=defect]::before{opacity:1}
+
+/* defect experiment */
+.dlab{display:grid;grid-template-columns:minmax(360px,min(64vh,700px)) minmax(320px,1fr);gap:56px;padding:28px 48px 0;align-items:start}
+.stagewrap{position:relative}
+#dStage{width:100%;aspect-ratio:1;display:block;cursor:crosshair;touch-action:none;image-rendering:pixelated;background:#000;box-shadow:0 40px 90px #000c}
+.stagewrap.drop #dStage{outline:2px dashed var(--ember);outline-offset:6px}
+#dWipeTag{position:absolute;top:-26px;transform:translateX(-50%);font-size:12px;color:var(--sand);white-space:nowrap}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn.on{background:var(--ivory);color:var(--void);border-color:var(--ivory)}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:14px 28px;margin-top:22px}
+.sliders label{display:block;font-size:12px;color:var(--sand);margin-bottom:2px}
+input[type=range]{accent-color:var(--ember);width:100%}
+.instrument{display:grid;grid-template-columns:1fr 70px;gap:28px}
+.dk{font-size:12px;color:var(--sand)}
+#dScore{font-family:var(--serif);font-size:clamp(56px,7vw,104px);line-height:.9;letter-spacing:-2px;margin:6px 0 0}
+#dLevel{font-family:var(--serif);font-style:italic;font-size:clamp(72px,10vw,150px);line-height:.85;margin:4px 0 0;transition:color .5s}
+#dLevel[data-level=low]{color:var(--low)} #dLevel[data-level=check]{color:var(--check)} #dLevel[data-level=high]{color:var(--high)}
+#dLevel.shift{animation:shift .7s cubic-bezier(.2,.7,.2,1)}
+@keyframes shift{0%{letter-spacing:.12em;opacity:.3}100%{letter-spacing:0;opacity:1}}
+#dSentence{font-size:18px;margin:10px 0 0}
+#dDelta{color:var(--sand);margin:14px 0 0}
+#dDelta b{color:var(--ivory);font-weight:500}
+.vscale{position:relative;height:100%;min-height:340px;width:12px;border-radius:2px;margin-left:22px;
+  background:linear-gradient(0deg,var(--low) 0 calc(100% - var(--a)),var(--check) calc(100% - var(--a)) calc(100% - var(--b)),var(--high) calc(100% - var(--b)) 100%)}
+.vscale .th{position:absolute;left:18px;transform:translateY(50%);font-size:11px;color:var(--sand);white-space:nowrap}
+#dNeedle,#dOrig{position:absolute;left:-10px;width:32px;height:2px;transform:translateY(50%);transition:bottom .35s cubic-bezier(.2,.7,.2,1)}
+#dNeedle{background:var(--ivory);height:3px} #dOrig{background:var(--ash)}
+#dSpark{width:100%;height:60px;display:block;margin-top:22px}
+.caveat{font-size:13px;color:var(--sand);border-left:2px solid var(--ember);padding-left:12px;margin:22px 0 0;max-width:56ch}
+#dInfo{font-size:13px;color:var(--ash);margin-top:12px}
+.seq{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;padding:64px 48px 0;align-items:end}
+.seq figure{margin:0;opacity:.35;transition:opacity .6s}
+.seq figure.lit,.seq:not(.playing) figure{opacity:1}
+.seq canvas{width:100%;aspect-ratio:1;image-rendering:pixelated;display:block;background:#000}
+.seq figcaption{font-family:var(--serif);font-size:26px;margin-bottom:8px}
+.seq figcaption span{font-family:var(--sans);font-size:12px;color:var(--sand);display:block}
+.seqhead{display:flex;align-items:baseline;gap:20px;padding:56px 48px 0}
+.seqhead h3,#sens h3{font-family:var(--serif);font-weight:400;font-size:44px;margin:0;line-height:1}
+#sens{display:grid;grid-template-columns:300px 1fr;gap:48px;padding:72px 48px 0}
+#sens select{width:100%;margin-bottom:12px}
+#sChart{width:100%;height:auto;display:block}
+#sChart .ax{fill:var(--sand);font-size:12px;font-family:var(--sans)} #sChart .dim{fill:var(--ash)}
+#sStrip{display:flex;gap:6px;margin-top:12px}
+#sStrip canvas{width:calc((100% - 54px)/10);aspect-ratio:1;image-rendering:pixelated}
+
+/* universe */
+.uwrap{position:relative;margin:24px 48px 0;height:min(72vh,820px)}
+#uCanvas{width:100%;height:100%;display:block;cursor:grab;background:radial-gradient(ellipse at center,#141312,#09090a 70%)}
+#uCanvas:active{cursor:grabbing}
+#uTip{position:absolute;pointer-events:none;display:flex;gap:12px;background:#121213ee;border:1px solid var(--rule);padding:10px;font-size:13px;line-height:1.4}
+#uTip[hidden]{display:none}
+#uTip canvas{width:96px;height:96px;image-rendering:pixelated}
+#uTip .dim{color:var(--sand)}
+.ukey{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--rule);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--sand);font-size:13px}
+.ukey.on{color:var(--ivory)} .ukey i{width:9px;height:9px;border-radius:50%} .ukey:not(.on) i{opacity:.25}
+.ubar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:18px 48px 0}
+#uAxes,#uLoaded{font-size:13px;color:var(--sand);padding:12px 48px 0;max-width:110ch;margin:0}
+
+/* demo */
+#demo{position:fixed;left:0;right:0;bottom:0;z-index:80;background:linear-gradient(transparent,#09090af2 30%);padding:60px 48px 28px}
+#demoTitle{font-family:var(--serif);font-size:44px;margin:0;line-height:1}
+#demoText{max-width:80ch;margin:10px 0 0;font-size:18px;color:var(--ivory)}
+#demoTrack{height:2px;background:var(--rule);margin-top:18px}#demoBar{height:2px;background:var(--ember);width:0}
+#demoStop{position:absolute;right:48px;bottom:34px}
+body.demo #drawer{display:none}
+body.demo .head,body.demo section.ubar,body.demo .honest,body.demo #sens,body.demo .seqhead{display:none}
+body.demo .dlab,body.demo .scene,body.demo .uwrap{margin-top:12px}
+body.demo main.room{padding-bottom:240px}
+@media (max-width:1000px){.dlab,#sens{grid-template-columns:1fr}.seq{grid-template-columns:1fr}}
+
+@media (prefers-reduced-motion:reduce){body::before{transition:none}#dLevel.shift{animation:none}.station{animation:none}.flow.pulse{animation:none}.stack .plane,#drawer{transition:none}}
+@media (max-width:900px){.top,.head{padding-left:20px;padding-right:20px}.head{grid-template-columns:1fr}.readline{grid-template-columns:1fr 1fr;margin:0 20px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 class="wm">NEURAL <em>/</em> LAB</h1>
+  <nav class="rooms" aria-label="Rooms">
+    <a href="#defect" data-room="defect">Defect experiment</a>
+    <a href="#architecture" data-room="architecture">Architecture</a>
+    <a href="#universe" data-room="universe">Latent universe</a>
+    <a href="/classic.html">Classic interface</a>
+    <button class="btn" id="demoBtn">Play 90-second demo</button>
+  </nav>
+  <span class="st" id="status">Loading the model…</span>
+</header>
+
+<section class="ubar" style="padding-top:20px">
+  <select class="btn" id="tilePick" aria-label="Weld tile"></select>
+  <button class="btn" id="upload">Upload a tile</button><input type="file" id="file" accept="image/*" hidden>
+  <span class="dk" id="tileInfo"></span>
+</section>
+
+<main class="room" id="room-defect" data-room="defect" hidden>
+  <section class="head">
+    <div>
+      <h2>Draw a defect. <i>See if the network catches it.</i></h2>
+      <p>Paint on a real X-ray tile. After every stroke the network redraws it and measures what it could not redraw. A drawn mark is not a real defect: sometimes the score jumps, sometimes it barely moves. Both are results.</p>
+    </div>
+  </section>
+  <section class="dlab">
+    <div>
+      <div class="tools" style="margin-bottom:14px">
+        <button class="btn on" data-mode="dark">Darken</button><button class="btn" data-mode="light">Lighten</button><button class="btn" data-mode="restore">Restore</button>
+        <span style="flex:1"></span><button class="btn" id="dUndo">Undo</button><button class="btn" id="dReset">Reset weld</button>
+      </div>
+      <div class="stagewrap" id="dStageWrap"><canvas id="dStage" width="704" height="704" aria-label="Weld tile: draw on it"></canvas><span id="dWipeTag" hidden>original ◂ ▸ now</span></div>
+      <div class="sliders">
+        <div><label>Brush size <span class="num" id="dSizeV"></span></label><input id="dSize" type="range" min="1" max="10" value="3"></div>
+        <div><label>Brush strength <span class="num" id="dStrV"></span></label><input id="dStr" type="range" min="5" max="100" value="45"></div>
+        <div><label>Error heatmap on the weld <span class="num" id="dOvV"></span></label><input id="dOv" type="range" min="0" max="100" value="35"></div>
+        <div><label>Before / after: reveal the original <span class="num" id="dWipeV"></span></label><input id="dWipe" type="range" min="0" max="100" value="0"></div>
+      </div>
+    </div>
+    <div class="instrument">
+      <div>
+        <div class="dk">Anomaly score: mean of the error map</div>
+        <div id="dScore" class="num">–</div>
+        <div id="dLevel">–</div>
+        <p id="dSentence"></p>
+        <p id="dDelta"></p>
+        <div class="dk" style="margin-top:22px">Score as you draw</div>
+        <svg id="dSpark" viewBox="0 0 400 60" preserveAspectRatio="none"></svg>
+        <p class="caveat">Thresholds are the deployed app's: check above ${0}, high above ${0}. The model ranks what an inspector should look at. It does not decide.</p>
+        <p id="dInfo"></p>
+      </div>
+      <div class="vscale" id="dScale" aria-hidden="true"><div id="dOrig"></div><div id="dNeedle"></div></div>
+    </div>
+  </section>
+  <div class="seqhead"><h3>Original, redraw, error</h3><button class="btn" id="dPlay">Play the sequence</button></div>
+  <section class="seq">
+    <figure><figcaption>What it receives<span>the tile, as you drew it</span></figcaption><canvas id="dSeqA" width="64" height="64"></canvas></figure>
+    <figure><figcaption>What it redraws<span>decoder output from the 32-number code</span></figcaption><canvas id="dSeqB" width="64" height="64"></canvas></figure>
+    <figure><figcaption>What it missed<span>(received − redrawn)², fixed scale 0–0.05, not auto-brightened</span></figcaption><canvas id="dSeqC" width="64" height="64"></canvas></figure>
+  </section>
+  <section id="sens">
+    <div>
+      <h3>How sensitive is it?</h3>
+      <p class="dk" style="font-size:14px;margin:14px 0 18px">One synthetic defect on 12 real sound test welds. Sweep its size or darkness and plot the score the network actually gives. The band is the range over the 12 welds.</p>
+      <select class="btn" id="sShape"><option value="pore">Pore (round)</option><option value="crack">Crack (thin diagonal line)</option><option value="band">Band (like lack of penetration)</option></select>
+      <select class="btn" id="sVar"><option value="size">Sweep size, fixed darkness</option><option value="dark">Sweep darkness, fixed size</option></select>
+      <label class="dk" id="sFixL"></label><input id="sFix" type="range" min="0" max="100" value="50">
+      <div class="tools" style="margin-top:16px"><button class="btn on" id="sRun">Run the experiment</button><button class="btn" id="sCsv" disabled>Download CSV</button><button class="btn" id="sApply">Put one on my weld</button></div>
+      <p class="dk" id="sNote" style="margin-top:12px"></p>
+    </div>
+    <div><svg id="sChart" viewBox="0 0 900 380"></svg><div id="sStrip"></div></div>
+  </section>
+  <p class="honest" style="margin-top:48px">Everything in this room is a real forward pass of the published model. The animated sequence only crossfades between two real images and fades the real error map in at its fixed scale.</p>
+</main>
+
+<main class="room" id="room-arch" data-room="architecture" hidden>
+  <section class="head">
+    <div>
+      <h2>Inside the network, <i>as it reads your weld</i></h2>
+      <p>Team 1's autoencoder, running live in this page. Your weld enters on the left, is squeezed into 32 numbers, and is redrawn on the right.
+         Every plane is a real feature map from that pass. Click a layer to see all of its channels; drag the 32 bars to change what the decoder receives.</p>
+    </div>
+    <div class="ctl"><button class="btn" id="zReset">Reset the code</button></div>
+  </section>
+
+  <section class="scene" id="scene">
+    <svg id="flows" aria-hidden="true"></svg>
+    <div class="rail" id="rail"></div>
+  </section>
+
+  <section class="readline">
+    <div><div class="k">Anomaly score of your weld</div><div id="rlScore" class="num">–</div></div>
+    <div><div class="k">Risk level</div><div id="rlLevel">–</div></div>
+    <p id="rlSteer"></p>
+    <span></span>
+  </section>
+  <p class="honest">What is real here: every plane, bar and number is computed by the published model in your browser (two ONNX files exported from its weights and
+    checked against the deployed model and PyTorch). Planes show each layer's five most active channels for this weld, coloured on that layer's own scale; small bars
+    are per-channel mean activations. The dotted lines only show the order of operations. They are not weights, and they do not show which neurons connect.</p>
+</main>
+
+<main class="room" id="room-universe" data-room="universe" hidden>
+  <section class="head">
+    <div>
+      <h2>The latent universe. <i>3,019 welds, as the network sees them.</i></h2>
+      <p>Each point is a real test tile, placed by the 32 numbers the encoder compressed it into, then projected to 3D (or 2D) with PCA. Colours are the true classes: the network never saw these labels. Drag to turn, hover to see a tile, click to load it.</p>
+    </div>
+    <div class="ctl"><button class="btn on" data-umode="3d">3D · PC1–PC3</button><button class="btn" data-umode="2d">2D · PC1–PC2</button></div>
+  </section>
+  <div class="ubar" id="uKey"></div>
+  <div class="uwrap"><canvas id="uCanvas"></canvas><div id="uTip" hidden><canvas id="uTipImg" width="64" height="64"></canvas><div id="uTipText"></div></div></div>
+  <p id="uAxes"></p><p id="uLoaded"></p>
+  <p class="honest" style="margin-top:28px">PCA is a linear projection of 32 dimensions down to 3 or 2: points that look close may differ in the dimensions that are not shown. The slow turn of the 3D view is a camera move only.</p>
+</main>
+
+<section id="demo" hidden aria-live="polite">
+  <h3 id="demoTitle"></h3><p id="demoText"></p><div id="demoTrack"><div id="demoBar"></div></div>
+  <button class="btn" id="demoStop">Stop demo</button>
+</section>
+
+<aside id="drawer" aria-live="polite">
+  <header><h3 id="drName"></h3><button class="btn" id="drawerClose">Close</button></header>
+  <p id="drOp"></p>
+  <div id="drBody"></div>
+</aside>
+
+<script src="core.js"></script>
+<script src="arch.js"></script>
+<script src="defect.js"></script>
+<script src="universe.js"></script>
+<script src="demo.js"></script>
+<script>
+"use strict";
+const ROOMS = { defect: "room-defect", architecture: "room-arch", universe: "room-universe" };
+function go(room) {
+  if (!ROOMS[room]) room = "defect";
+  for (const [k, id] of Object.entries(ROOMS)) document.getElementById(id).hidden = k !== room;
+  document.querySelectorAll("nav.rooms a[data-room]").forEach(a => a.dataset.room === room ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  document.body.dataset.room = room;
+  if (location.hash !== "#" + room) history.replaceState(null, "", "#" + room);
+  if (room === "architecture") Arch.show(); else if (room === "universe") Universe.show(); else Defect.render();
+  scrollTo({ top: 0 });
+  if (document.body.classList.contains("demo")) {     // demo: bring the live part of the room into view
+    const target = { defect: ".dlab", architecture: ".scene", universe: ".uwrap" }[room];
+    document.querySelector(`#${ROOMS[room]} ${target}`).scrollIntoView({ block: "start" });
+    if (room === "universe") Universe.show();
+  }
+}
+(async () => {
+  const st = document.getElementById("status");
+  try {
+    const cfg = await NL.init();
+    document.querySelector(".caveat").textContent = `Thresholds are the deployed app's: check above ${cfg.t_low.toFixed(6)}, high above ${cfg.t_high.toFixed(6)}. The model ranks what an inspector should look at. It does not decide.`;
+    Arch.build(document.getElementById("room-arch"));
+    Defect.build(document.getElementById("room-defect"));
+    await Universe.build(document.getElementById("room-universe"));
+    const sel = document.getElementById("tilePick"); let grp = null, og;
+    cfg.catalogue.forEach(t => { if (t.label !== grp) { grp = t.label; og = document.createElement("optgroup"); og.label = NL.CLASS_NAME[grp]; sel.appendChild(og); }
+      const o = document.createElement("option"); o.value = t.id; o.textContent = `${NL.CLASS_NAME[t.label]} · ${t.pick} · score ${t.score.toFixed(5)}`; og.appendChild(o); });
+    sel.onchange = () => NL.loadTest(sel.value);
+    document.getElementById("upload").onclick = () => document.getElementById("file").click();
+    document.getElementById("file").onchange = e => e.target.files[0] && NL.loadFile(e.target.files[0]).catch(err => st.textContent = err.message);
+    NL.on(what => { if (what !== "tile") return; const w = NL.state.weld;
+      if (w.id !== undefined && [...sel.options].some(o => +o.value === w.id)) sel.value = w.id; else sel.selectedIndex = -1;
+      document.getElementById("tileInfo").textContent = w.label === "uploaded" ? "Working on: your uploaded image" : `Working on: ${NL.CLASS_NAME[w.label]}, test weld ${w.weld}`;
+      st.innerHTML = NL.state.match ? `Model running in your browser · <b>matches Python ✓</b>` : "⚠ Browser result differs from Python"; });
+    document.querySelectorAll("nav.rooms a[data-room]").forEach(a => a.onclick = e => { e.preventDefault(); go(a.dataset.room); });
+    addEventListener("hashchange", () => go(location.hash.slice(1)));
+    document.getElementById("demoBtn").onclick = () => Demo.start(go);
+    document.getElementById("demoStop").onclick = () => Demo.stop();
+    const start = cfg.catalogue.find(t => t.label === "no_defect" && t.pick === "median");
+    sel.value = start.id; await NL.loadTest(start.id);
+    go(location.hash.slice(1) || "defect");
+  } catch (err) { st.textContent = "Error: " + err.message; console.error(err); }
+})();
+</script>
+</body>
+</html>
