@@ -5,8 +5,7 @@ The model server of Team 1's hackathon project (AI Methods I, IAAC MaAI 2026/27)
 | Address | What |
 |---|---|
 | **https://hackathon-team1-weld-anomaly.onrender.com** | **NEURAL / LAB** (Sahil's lab, `neural_lab/`): draw a defect on a real weld and watch the network react live, the architecture, the latent universe, a 90-second demo. The model runs **in the browser** |
-| **…/gradio** | The tile app: upload an X-ray tile, see its risk level and where to look |
-| **…/gradio** + `/predict` API | For programs: send an image, get JSON back. The Cloudflare web app uses it (`MODEL_URL` = `https://hackathon-team1-weld-anomaly.onrender.com/gradio`) |
+| **…/gradio** + `/predict` API | **API only, for programs:** send an image, get JSON back (no page for people any more; the app is NEURAL / LAB). The Cloudflare web app uses it (`MODEL_URL` = `https://hackathon-team1-weld-anomaly.onrender.com/gradio`) |
 
 Free Render service: it sleeps after 15 minutes without requests, and the first request then takes about a minute.
 
@@ -91,7 +90,7 @@ python app.py                    # then open http://127.0.0.1:7860
 | `call_server.py` | Wakes the server and calls it with `gradio_client` and with plain HTTP |
 | `requirements.txt`, `.python-version` | What Render installs: Gradio and ONNX Runtime, Python 3.12, no PyTorch |
 | `render.yaml` | Render settings from the course template (our service was set up in the Render dashboard: root directory `02_model_server`, start command `python app.py`) |
-| `examples/` | Example tiles for the page. **Local only:** they come from RIAWELC, which must not be re-uploaded, so the online page has no examples |
+| `examples/` | Test tiles for `call_server.py`. **Local only:** they come from RIAWELC, which must not be re-uploaded |
 
 ## Limitations
 

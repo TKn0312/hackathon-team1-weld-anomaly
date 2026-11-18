@@ -32,11 +32,6 @@ ERROR_MAP_MAX = 0.05
 session = ort.InferenceSession(str(HERE / "anomaly_ae.onnx"), providers=["CPUExecutionProvider"])
 INPUT_NAME = session.get_inputs()[0].name
 
-RISK_TEXT = {
-    "low": "LOW: looks like a sound weld",
-    "check": "CHECK: unusual, an inspector should look",
-    "high": "HIGH: strongly abnormal, inspect first",
-}
 
 
 def preprocess(image: Image.Image) -> np.ndarray:
@@ -97,14 +92,6 @@ def png_base64(image: Image.Image) -> str:
     return base64.b64encode(buffer.getvalue()).decode()
 
 
-# ---- For people: the web form ----------------------------------------------------
-def analyse_for_page(image):
-    if image is None:
-        raise gr.Error("Upload an X-ray tile first.")
-    result, rebuilt, error_map = analyse(image)
-    return {RISK_TEXT[result["risk_level"]]: 1.0}, result, grey_image(rebuilt), heatmap_image(error_map)
-
-
 # ---- For programs: base64 image in, JSON out --------------------------------------
 def predict(image_b64: str) -> dict:
     """Score one weld X-ray tile. Send a base64-encoded PNG or JPEG (a 'data:image/...;base64,' prefix is allowed).
@@ -118,31 +105,13 @@ def predict(image_b64: str) -> dict:
     return result
 
 
-EXAMPLES = sorted(str(p) for p in (HERE / "examples").glob("*.png"))   # local only: dataset tiles are not in git
-
-with gr.Blocks(title="Weld X-ray anomaly detector") as demo:
+# Only the API lives here (for the Cloudflare app and other programs); the app for people is NEURAL / LAB at "/".
+with gr.Blocks(title="Weld X-ray anomaly detector: API") as demo:
     gr.Markdown(
-        "# Weld X-ray anomaly detector\n"
-        "A convolutional autoencoder trained **only on sound welds** (RIAWELC X-ray tiles). "
-        "It redraws every tile as a sound weld: where it fails, there is probably a defect "
-        "(porosity, crack, lack of penetration).\n\n"
-        f"**Risk levels:** low (score ≤ {T_LOW:.6f}) · check · high (score > {T_HIGH:.6f}). "
-        "A screening aid for an inspector, not an accept/reject decision."
+        "# Weld X-ray anomaly detector: API\n"
+        "This address only serves the `/predict` API for programs (send a base64 X-ray tile, get the score, "
+        "the risk level and the error map as JSON). **The app is [NEURAL / LAB](/).**"
     )
-    with gr.Row():
-        with gr.Column():
-            image_in = gr.Image(type="pil", label="X-ray tile of a weld")
-            button = gr.Button("Analyse", variant="primary")
-            if EXAMPLES:
-                gr.Examples(EXAMPLES, inputs=image_in)
-        with gr.Column():
-            verdict_out = gr.Label(label="Risk level")
-            details_out = gr.JSON(label="Details")
-            with gr.Row():
-                rebuilt_out = gr.Image(label="Rebuilt as a sound weld")
-                error_out = gr.Image(label="Error map: bright = where to look")
-    button.click(analyse_for_page, inputs=image_in, outputs=[verdict_out, details_out, rebuilt_out, error_out],
-                 api_visibility="private")
     gr.api(predict, api_name="predict")
 
 # ---- NEURAL / LAB (Sahil's lab, neural_lab/) at the main address ------------------------------------
