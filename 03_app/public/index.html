@@ -12,153 +12,96 @@
   <main>
     <header class="topbar">
       <p class="wm">Weld <i>X-ray</i> Check</p>
-      <nav class="nav">
-        <a class="btn lab" href="https://hackathon-team1-weld-anomaly.onrender.com" target="_blank" rel="noopener">How the model thinks · NEURAL / LAB ↗</a>
-        <form method="post" action="/api/logout"><button type="submit">Log out</button></form>
-      </nav>
+      <form method="post" action="/api/logout"><button type="submit">Log out</button></form>
     </header>
+    <p class="intro">Upload an X-ray tile of a weld. Our model learned only from good welds and tries to redraw yours:
+      where it can't, the error map lights up. That's where to look.</p>
 
-    <section class="head">
-      <span class="kicker">Team 1 · weld anomaly screening</span>
-      <h2>Screen a weld. <i>See where to look.</i></h2>
-      <p>Upload an X-ray tile of a weld. Our autoencoder, trained only on sound welds, tries to redraw it:
-         where it fails, something is unusual. You get a risk level and a map of where to look.</p>
-    </section>
+    <div class="workspace">
+      <!-- 1. Upload -->
+      <section class="card">
+        <h2>Check a tile</h2>
+        <form id="upload">
+          <label class="drop" id="drop">
+            <input id="image" name="image" type="file" accept="image/png,image/jpeg">
+            <img id="preview" alt="" hidden>
+            <strong id="drop-text">Drop an X-ray tile here, or click to choose</strong>
+            <span class="muted small">PNG or JPEG · about 227 × 227 px · max 5 MB</span>
+          </label>
+          <div class="upload-row">
+            <button id="send" class="primary" type="submit" disabled>Check tile</button>
+            <span id="file-name" class="file-name">No file chosen</span>
+          </div>
+        </form>
+        <div id="status" class="status" hidden></div>
+      </section>
 
-    <!-- 1. Upload -->
-    <section class="panel">
-      <h3>Check a tile</h3>
-      <form id="upload">
-        <label class="drop" id="drop">
-          <input id="image" name="image" type="file" accept="image/png,image/jpeg">
-          <strong>Drop an X-ray tile here, or click to choose</strong>
-          <span class="muted small">PNG or JPEG · one weld tile, about 227 × 227 px · max 5 MB</span>
-        </label>
-        <div class="upload-row">
-          <button id="send" class="primary" type="submit" disabled>Check tile</button>
-          <span id="file-name" class="file-name">No file chosen</span>
+      <!-- 2. Result (a new check, or a saved one clicked in Recent checks) -->
+      <section class="card" id="result-card">
+        <div class="placeholder" id="placeholder">
+          <p>Your result will appear here:<br>risk level, score and the three images.</p>
         </div>
-      </form>
-      <div id="status" class="status" hidden></div>
-    </section>
+        <div id="result" hidden>
+          <p class="saved-note" id="saved-note" hidden></p>
+          <div class="result-head">
+            <span id="badge" class="badge big"></span>
+            <p id="explain" class="explain"></p>
+          </div>
 
-    <!-- 2. Result -->
-    <section class="panel" id="result" hidden>
-      <div class="result">
-        <div>
-          <div class="stage">
-            <img id="img-input" alt="The uploaded tile">
-            <img id="img-overlay" alt="Where the model failed, laid over the tile">
-          </div>
-          <div class="slider">
-            <span>X-ray</span>
-            <input id="mix" type="range" min="0" max="100" value="55" aria-label="Fade between the X-ray and the error map">
-            <span>Where to look</span>
-          </div>
-          <div class="pair">
-            <figure><img id="img-rebuilt" alt="The tile as the model redraws it"><figcaption>Model's redraw<span>how a sound weld would look</span></figcaption></figure>
-            <figure><img id="img-error" alt="Error map"><figcaption>Where to look<span>bright = biggest difference</span></figcaption></figure>
-          </div>
-        </div>
-        <div class="readout">
-          <span class="label">Risk level</span>
-          <p id="level"></p>
-          <p id="verdict"></p>
-          <p id="action" class="action"></p>
-
-          <div class="compare">
-            <span class="label">Where this tile sits</span>
-            <div class="rows">
-              <div class="crow"><span class="cname">Sound welds</span><div class="ctrack"><div class="cband sound" id="band-sound"></div></div></div>
-              <div class="crow"><span class="cname">Real defects</span><div class="ctrack"><div class="cband defect" id="band-defect"></div></div></div>
-              <div class="nlayer"><div class="cneedle" id="cneedle"><span>this tile</span></div></div>
+          <div class="scale">
+            <div class="scale-bar">
+              <div class="tick" id="tick-low"><span>LOW up to 0.000255</span></div>
+              <div class="tick" id="tick-high"><span>HIGH above 0.001442</span></div>
+              <div class="marker" id="marker"><span id="marker-label"></span></div>
             </div>
-            <div class="gauge" id="gauge"></div>
-            <div class="gauge-labels"><span>low</span><span>check</span><span>high</span></div>
-            <p class="muted small" id="compare-text"></p>
+            <p class="scale-text" id="scale-text"></p>
           </div>
 
-          <p id="score"></p>
-          <p class="note">A screening aid, not a verdict: a qualified inspector decides.</p>
-        </div>
-      </div>
-    </section>
+          <div class="images" id="images">
+            <figure><img id="img-input" alt="The uploaded X-ray"><figcaption>Uploaded X-ray<span>as you sent it</span></figcaption></figure>
+            <figure id="fig-redraw"><img id="img-redraw" alt="The X-ray as the model redraws it"><figcaption>Model's redraw<span>how a good weld would look</span></figcaption></figure>
+            <figure id="fig-error"><img id="img-error" alt="Error heat map"><figcaption>Error heat map<span>bright = where the redraw failed</span></figcaption></figure>
+          </div>
 
-    <!-- 3. History -->
-    <section class="panel">
-      <h3>Recent checks</h3>
-      <p class="muted">Every result is saved with its image, and is still here after a reload.</p>
-      <div class="stats">
-        <div class="stat"><b id="n-all">0</b><span>recent checks</span></div>
-        <div class="stat high"><b id="n-high">0</b><span>high</span></div>
-        <div class="stat check"><b id="n-check">0</b><span>check</span></div>
-        <div class="stat low"><b id="n-low">0</b><span>low</span></div>
-      </div>
+          <div class="result-foot">
+            <p class="note">A screening aid, not a verdict: a qualified inspector decides.</p>
+            <a class="btn link-accent" href="https://hackathon-team1-weld-anomaly.onrender.com/#architecture" target="_blank" rel="noopener">Look inside the network →</a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 3. Recent checks -->
+    <section class="card history">
+      <h2>Recent checks</h2>
+      <p class="summary" id="summary">Click a row to see it again with its error map.</p>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Tile</th><th>When</th><th class="hide-sm">File</th><th>Risk</th><th>Compared with real welds</th></tr></thead>
+          <thead><tr><th>Tile</th><th>When</th><th class="hide-sm">File</th><th>Risk</th><th>Score</th></tr></thead>
           <tbody id="history"></tbody>
         </table>
       </div>
     </section>
 
-    <footer>
-      <span>Weld X-ray Check · Team 1 · AI Methods I, IAAC MaAI 2026/27</span>
-      <span>Model: convolutional autoencoder · data: RIAWELC (cited, not redistributed)</span>
-    </footer>
+    <footer>Weld X-ray Check · Team 1 · AI Methods I, IAAC MaAI 2026/27 · results are saved in Cloudflare D1, images in R2</footer>
   </main>
 
   <script>
     const $ = (id) => document.getElementById(id);
-    const form = $("upload"), input = $("image"), drop = $("drop"), sendButton = $("send");
-    const statusBox = $("status");
+    const form = $("upload"), input = $("image"), drop = $("drop"), sendButton = $("send"), statusBox = $("status");
 
+    // The model server's thresholds (02_model_server/README.md); a result from the server brings its own
+    const T_LOW = 0.000255, T_HIGH = 0.001442;
     const RISK = {
-      low:   { label: "Low",   action: "No action needed." },
-      check: { label: "Check", action: "Have an inspector look at the bright area." },
-      high:  { label: "High",  action: "Inspect this one first." },
+      low:   { label: "LOW",   text: "Looks like the good welds it learned from." },
+      check: { label: "CHECK", text: "Somewhat unusual, have a look." },
+      high:  { label: "HIGH",  text: "Very unlike a good weld, inspect it." },
     };
+    const levelOf = (value, score) => RISK[value] ? value : (score <= T_LOW ? "low" : score > T_HIGH ? "high" : "check");
 
-    // What real welds score: the model's scores on the team's TEST set, 4 welds it never saw (3,019 tiles:
-    // 866 sound, 2,153 with a defect). Every 2.5th percentile, from 0% to 100% (computed with neural_lab, 18 Nov).
-    const SOUND_Q = [0.000102, 0.000117, 0.000122, 0.000125, 0.00013, 0.000134, 0.000141, 0.000144, 0.000146, 0.000149,
-      0.000151, 0.000153, 0.000156, 0.000158, 0.000161, 0.000164, 0.000166, 0.000168, 0.000169, 0.000171, 0.000173,
-      0.000175, 0.000177, 0.000178, 0.00018, 0.000181, 0.000183, 0.000184, 0.000186, 0.000188, 0.00019, 0.000192,
-      0.000197, 0.0002, 0.000208, 0.000221, 0.000238, 0.000289, 0.000313, 0.000333, 0.000413];
-    const DEFECT_Q = [0.000221, 0.000403, 0.000915, 0.00122, 0.00142, 0.00156, 0.00188, 0.00215, 0.00236, 0.00285,
-      0.00315, 0.00365, 0.00407, 0.00447, 0.00492, 0.00526, 0.00571, 0.00631, 0.00695, 0.00786, 0.00848, 0.00934,
-      0.00993, 0.0108, 0.0118, 0.0129, 0.0136, 0.0148, 0.0154, 0.0161, 0.017, 0.0181, 0.0191, 0.02, 0.0214, 0.023,
-      0.0257, 0.0306, 0.0382, 0.0523, 0.102];
-    // Share (0-100) of a group that scores BELOW v, read from its percentiles
-    function shareBelow(q, v) {
-      if (v <= q[0]) return 0;
-      if (v >= q[q.length - 1]) return 100;
-      const i = q.findIndex((x) => x >= v);
-      return (i - 1 + (v - q[i - 1]) / (q[i] - q[i - 1])) * 2.5;
-    }
-
-    // Log scale from 0.0001 to 0.1 for the chart and the gauge
-    const LOG_MIN = -4, LOG_MAX = -1;
+    // Score scale: log from 0.0001 to 0.01, so both thresholds and typical scores fit
+    const LOG_MIN = -4, LOG_MAX = -2;
     const pos = (v) => Math.min(100, Math.max(0, ((Math.log10(v) - LOG_MIN) / (LOG_MAX - LOG_MIN)) * 100));
-
-    // Plain words for an inspector: compare the tile with real sound welds and real defects
-    function explain(score) {
-      const sound = shareBelow(SOUND_Q, score);            // % of sound welds that score lower
-      const defectsHigher = 100 - shareBelow(DEFECT_Q, score);   // % of real defects that score higher
-      if (sound < 90) return "Within the normal range of the sound welds we tested.";
-      const vsSound = sound >= 99.5 ? "More unusual than every sound weld we tested"
-                                    : `More unusual than ${Math.floor(sound)}% of sound welds`;
-      const vsDefect = defectsHigher >= 50
-        ? `but milder than ${Math.min(99, Math.round(defectsHigher))}% of real defects: possibly a small or faint defect.`
-        : "and as strong as a typical real defect.";
-      return `${vsSound}, ${vsDefect}`;
-    }
-    // The same idea in a few words, for the history table
-    function shortExplain(score) {
-      if (shareBelow(SOUND_Q, score) < 90) return "Like a sound weld";
-      if (100 - shareBelow(DEFECT_Q, score) >= 50) return "Unusual, but milder than most defects";
-      return "Like a typical defect";
-    }
 
     // ---- Choosing a file (click or drag and drop) ----
     input.addEventListener("change", fileChosen);
@@ -171,10 +114,10 @@
       const file = input.files[0];
       $("file-name").textContent = file ? file.name : "No file chosen";
       sendButton.disabled = !file;
+      $("preview").hidden = !file;
+      $("drop-text").textContent = file ? "Click to choose another tile" : "Drop an X-ray tile here, or click to choose";
+      if (file) $("preview").src = URL.createObjectURL(file);
     }
-
-    // ---- The heatmap slider: fade the error map over the X-ray ----
-    $("mix").addEventListener("input", (e) => { $("img-overlay").style.opacity = e.target.value / 100; });
 
     function showStatus(kind, text, spinning) {
       statusBox.hidden = !kind;
@@ -184,17 +127,23 @@
     }
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-    // ---- Sending: if the model server sleeps, wait for it, then send again ----
+    // ---- Sending, with the wake-up ----
+    // If Render doesn't answer (timeout, 502/503/504, or our server says "waking"), we show a calm message and
+    // send the tile again every 10 seconds, for up to 2 minutes. No error is shown while we wait.
+    const RETRY_MS = 10000, MAX_WAIT_MS = 120000;
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const file = input.files[0];
       if (!file) return;
       sendButton.disabled = true;
       try {
-        const result = await predictWithWakeUp(file);
-        showResult(file, result);
-        showStatus(null);
-        loadHistory();
+        const result = await checkWithWakeUp(file);
+        if (result) {
+          showStatus(null);
+          showResult({ ...result, file });
+          loadHistory(result.id);
+        }
       } catch (error) {
         showStatus("error", error.message);
       } finally {
@@ -202,100 +151,131 @@
       }
     });
 
-    async function predictWithWakeUp(file) {
+    async function checkWithWakeUp(file) {
       const started = Date.now();
+      let warming = false;
+      showStatus("info", "Analysing the tile…", true);
       while (true) {
-        showStatus("info", "Analysing the tile…", true);
-        const body = new FormData();
-        body.append("image", file);
-        const response = await fetch("/api/predict", { method: "POST", body });
-        if (response.status === 401) { location.href = "/login"; throw new Error("Please log in again."); }
-        const data = await response.json().catch(() => ({}));
-        if (response.ok) return data;
-        if (!data.waking) throw new Error(data.error || `Something went wrong (${response.status}).`);
+        const answer = await sendOnce(file);
+        if (answer.result) return answer.result;
+        if (answer.error) throw new Error(answer.error);
 
-        // The model server on Render was asleep: wait until it answers, then try again
-        await waitUntilAwake(started);
+        // Waking: keep one long "are you up?" request open so Render can finish starting, and retry every 10 s
+        if (!warming) { warming = true; fetch("/api/status").catch(() => {}).finally(() => { warming = false; }); }
+        if (Date.now() - started > MAX_WAIT_MS) {
+          showStatus("info", "The model is still starting. Press “Check tile” again in a minute.");
+          return null;
+        }
+        showStatus("waking", "Model is waking up, about 1 minute…", true);
+        await sleep(RETRY_MS);
       }
     }
 
-    async function waitUntilAwake(started) {
-      while (true) {
-        const seconds = Math.round((Date.now() - started) / 1000);
-        if (seconds > 240) throw new Error("The model server is taking too long to wake up. Please try again in a few minutes.");
-        showStatus("waking", `The model is waking up, about one minute… (${seconds} s)`, true);
-        const status = await fetch("/api/status").then((r) => r.json()).catch(() => ({ awake: false }));
-        if (status.awake) return;
-        await sleep(5000);
+    // One attempt: { result } on success, { waking: true } when Render isn't ready, { error } for real problems
+    async function sendOnce(file) {
+      const body = new FormData();
+      body.append("image", file);
+      let response;
+      try {
+        response = await fetch("/api/predict", { method: "POST", body });
+      } catch {
+        return { waking: true };                       // network hiccup or timeout: treat like waking
       }
+      if (response.status === 401) { location.href = "/login"; return { error: "Please log in again." }; }
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) return { result: data };
+      if (data.waking || [502, 503, 504].includes(response.status)) return { waking: true };
+      return { error: data.error || `Something went wrong (${response.status}).` };
     }
 
-    function showResult(file, r) {
-      const level = RISK[r.risk_level] ? r.risk_level : "check";
-      const risk = RISK[level];
-      $("level").textContent = risk.label;
-      $("level").className = level;
-      $("verdict").textContent = explain(r.score);
-      $("action").textContent = "Suggested action: " + risk.action;
+    // ---- Showing a result: a new check (with the file) or a saved one (from Recent checks) ----
+    function showResult(r) {
+      const level = levelOf(r.risk_level, r.score);
+      const tLow = r.t_low || T_LOW, tHigh = r.t_high || T_HIGH;
 
-      $("img-input").src = URL.createObjectURL(file);
-      $("img-overlay").src = "data:image/png;base64," + r.error_map_png_base64;
-      $("img-overlay").style.opacity = $("mix").value / 100;
-      $("img-rebuilt").src = "data:image/png;base64," + r.reconstruction_png_base64;
-      $("img-error").src = "data:image/png;base64," + r.error_map_png_base64;
-
-      // "Where this tile sits": the middle 90% of sound welds and of real defects, and a line for this tile
-      const band = (el, q) => { el.style.left = pos(q[2]) + "%"; el.style.width = (pos(q[38]) - pos(q[2])) + "%"; };
-      band($("band-sound"), SOUND_Q);
-      band($("band-defect"), DEFECT_Q);
-      const gauge = $("gauge");
-      gauge.style.setProperty("--a", pos(r.t_low) + "%");
-      gauge.style.setProperty("--b", pos(r.t_high) + "%");
-      $("cneedle").style.left = "0%";
-      requestAnimationFrame(() => requestAnimationFrame(() => { $("cneedle").style.left = pos(r.score) + "%"; }));
-      $("compare-text").textContent =
-        "Bars: where 90% of the tiles of 4 test welds the model never saw score (866 sound, 2,153 with a defect).";
-
-      $("score").innerHTML = "";
-      const small = document.createElement("small");
-      small.textContent = `Anomaly score ${r.score.toFixed(6)} · ${r.score_vs_threshold}× the alarm threshold (${r.threshold})` +
-                          (r.mock ? " · TEST MODE: made-up answer" : "");
-      $("score").append(small);
-
+      $("placeholder").hidden = true;
       $("result").hidden = false;
-      $("result").scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+      $("badge").textContent = RISK[level].label;
+      $("badge").className = "badge big " + level;
+      $("explain").textContent = RISK[level].text;
 
-    // ---- History, read from the database ----
-    async function loadHistory() {
+      // Score next to the thresholds
+      $("tick-low").style.left = pos(tLow) + "%";
+      $("tick-high").style.left = pos(tHigh) + "%";
+      $("marker").style.left = "0%";
+      requestAnimationFrame(() => requestAnimationFrame(() => { $("marker").style.left = pos(r.score) + "%"; }));
+      $("marker-label").textContent = "this tile";
+      $("scale-text").innerHTML = "";
+      const b = document.createElement("b");
+      b.textContent = `Score ${r.score.toFixed(6)}`;
+      $("scale-text").append(b, document.createTextNode(` · LOW up to ${tLow} · HIGH above ${tHigh}`));
+
+      // Images
+      const saved = !r.file;
+      $("saved-note").hidden = !saved;
+      if (saved) {
+        $("saved-note").textContent = `Saved check · ${formatDate(r.created_at)}` + (r.file_name ? ` · ${r.file_name}` : "");
+        $("img-input").src = `/api/images/${encodeURIComponent(r.id)}`;
+        $("fig-redraw").hidden = true;                         // the redraw is not stored, only the error map
+        $("fig-error").hidden = false;
+        $("img-error").onerror = () => { $("fig-error").hidden = true; setImageColumns(); };   // older checks have no error map
+        $("img-error").src = `/api/images/${encodeURIComponent(r.id)}?kind=error`;
+      } else {
+        $("img-input").src = URL.createObjectURL(r.file);
+        $("fig-redraw").hidden = false;
+        $("fig-error").hidden = false;
+        $("img-error").onerror = null;
+        $("img-redraw").src = "data:image/png;base64," + r.reconstruction_png_base64;
+        $("img-error").src = "data:image/png;base64," + r.error_map_png_base64;
+      }
+      setImageColumns();
+      if (window.innerWidth < 900) $("result-card").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    function setImageColumns() {
+      const shown = [...$("images").children].filter((f) => !f.hidden).length;
+      $("images").className = "images" + (shown === 2 ? " two" : "");
+    }
+    const formatDate = (iso) => new Date(iso).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+
+    // ---- Recent checks, read from the database; click a row to see it again ----
+    let rows = [];
+    async function loadHistory(selectedId) {
       const tbody = $("history");
       const response = await fetch("/api/history");
       if (!response.ok) return;
-      const rows = await response.json();
-      const count = { low: 0, check: 0, high: 0 };
+      rows = await response.json();
       tbody.innerHTML = "";
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="5" class="empty">No checks yet. Upload a tile above.</td></tr>';
+        $("summary").textContent = "Click a row to see it again with its error map.";
+        return;
       }
+      const count = { low: 0, check: 0, high: 0 };
       for (const row of rows) {
-        const level = RISK[row.risk_level] ? row.risk_level : (row.is_anomaly ? "check" : "low");   // only known values
+        const level = levelOf(row.risk_level, row.score);   // only known values reach the page
         count[level]++;
         const tr = document.createElement("tr");
+        tr.className = "row" + (row.id === selectedId ? " selected" : "");
+        tr.tabIndex = 0;
         tr.innerHTML = `<td><img alt="" loading="lazy"></td><td></td><td class="file hide-sm"></td>` +
-                       `<td><span class="lvl ${level}"></span></td><td></td>`;
+                       `<td><span class="badge ${level}"></span></td><td></td>`;
         tr.querySelector("img").src = `/api/images/${encodeURIComponent(row.id)}`;
         // textContent everywhere: a file name can't inject HTML
-        tr.children[1].textContent = new Date(row.created_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+        tr.children[1].textContent = formatDate(row.created_at);
         tr.children[2].textContent = row.file_name || "";
-        tr.querySelector(".lvl").textContent = RISK[level].label;
-        tr.children[4].textContent = shortExplain(row.score);
-        tr.children[4].title = explain(row.score) + `  (anomaly score ${row.score.toFixed(6)})`;
+        tr.querySelector(".badge").textContent = RISK[level].label;
+        tr.children[4].textContent = row.score.toFixed(6);
+        const open = () => {
+          tbody.querySelectorAll("tr.selected").forEach((x) => x.classList.remove("selected"));
+          tr.classList.add("selected");
+          showResult(row);
+        };
+        tr.addEventListener("click", open);
+        tr.addEventListener("keydown", (e) => { if (e.key === "Enter") open(); });
         tbody.appendChild(tr);
       }
-      $("n-all").textContent = rows.length;
-      $("n-high").textContent = count.high;
-      $("n-check").textContent = count.check;
-      $("n-low").textContent = count.low;
+      $("summary").textContent = `${rows.length} recent checks · ${count.high} HIGH · ${count.check} CHECK · ${count.low} LOW. ` +
+                                 "Click a row to see it again with its error map.";
     }
 
     loadHistory();
