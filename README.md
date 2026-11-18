@@ -1,8 +1,18 @@
-# Weld anomaly detection: from autoencoder to live app
+# NEURAL / LAB · Weld anomaly detection with an autoencoder
 
 **Team 1:** Jerome, Kazuko, Amelia, Sahil
 **Course:** AI Methods I – Hackathon (IAAC MaAI 2026/27), 16–20 November 2026
 **Topic:** an autoencoder trained on defect-free weld radiographs flags porosity, cracks and lack of penetration by their reconstruction error, as a quality check for structural steel.
+
+## ▶ The app: [hackathon-team1-weld-anomaly.onrender.com](https://hackathon-team1-weld-anomaly.onrender.com)
+
+**NEURAL / LAB, exploring the black box.** Our trained model runs live in your browser:
+- **Defect experiment:** draw a pore, crack or band on a real weld X-ray and watch the score, the risk level (LOW / CHECK / HIGH) and the error heatmap react as you draw.
+- **Architecture:** follow one weld through the encoder, the 32-number code and the decoder.
+- **Latent universe:** all 3,019 test welds as points in the model's latent space.
+- **90-second demo:** a guided tour.
+
+Works on any phone or laptop, nothing to install. The free server sleeps after 15 minutes without visitors, so the first visit then takes about a minute. The lab was built by Sahil ([neural_lab/](neural_lab/)) on top of the team's model.
 
 ## Getting started
 
