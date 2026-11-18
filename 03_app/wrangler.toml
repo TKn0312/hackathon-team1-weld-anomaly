@@ -1,7 +1,5 @@
 # Cloudflare Pages project: the page (public/) + the API (functions/) + D1 database + R2 bucket
 name = "hackathon-team1-weld-app"
-# The team's Cloudflare account (an id, not a secret): needed when your login sees more than one account
-account_id = "998c88adb3df00dcf48cc10ca7ba35af"
 pages_build_output_dir = "./public"
 compatibility_date = "2026-11-01"
 

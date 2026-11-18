@@ -66,6 +66,8 @@ npx wrangler login                                   # once per computer
 npx wrangler pages deploy --branch main              # updates hackathon-team1-weld-app.pages.dev
 ```
 
+If your Cloudflare login sees more than one account, wrangler must be told which one: set the environment variable `CLOUDFLARE_ACCOUNT_ID` to the team account's id (Cloudflare dashboard → Account home). Pages does not accept `account_id` in `wrangler.toml`.
+
 Set up once (already done): `npx wrangler d1 create hackathon-team1-weld-db` (its id goes into `wrangler.toml`), `npx wrangler r2 bucket create hackathon-team1-weld-images`, `npx wrangler d1 execute hackathon-team1-weld-db --remote --file=schema.sql`, `npx wrangler pages secret put APP_PASSWORD`.
 
 ## Limits
