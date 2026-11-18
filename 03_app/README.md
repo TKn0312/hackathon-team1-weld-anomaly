@@ -1,8 +1,8 @@
-# 03_app · Weld X-ray Check
+# 03_app · NEURAL / LAB · Inspect
 
 **Live app:** https://hackathon-team1-weld-app.pages.dev
 
-A password-protected web app for weld inspectors. You upload an X-ray tile of a weld; our model (a convolutional autoencoder that learned only from good welds) tries to redraw it. Where it can't, the error map lights up. The app shows a risk level (**LOW / CHECK / HIGH**), the score against the two thresholds, and three images side by side: the uploaded X-ray, the model's redraw and the error heat map. It saves every check so it is still there after a reload. A button opens **NEURAL / LAB**, where you can look inside the same network.
+A password-protected web app for weld inspectors. You upload an X-ray tile of a weld; our model (a convolutional autoencoder that learned only from good welds) tries to redraw it. Where it can't, the error map lights up. The app shows a risk level (**LOW / CHECK / HIGH**), the score against the two thresholds, and three images side by side: the uploaded X-ray, the model's redraw and the error heat map. It saves every check so it is still there after a reload. A button opens **NEURAL / LAB · Look inside** (on Render), where you can look inside the same network.
 
 It is a screening aid, not a verdict: a qualified inspector decides.
 

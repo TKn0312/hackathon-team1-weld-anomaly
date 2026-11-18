@@ -4,9 +4,14 @@
 **Course:** AI Methods I – Hackathon (IAAC MaAI 2026/27), 16–20 November 2026
 **Topic:** an autoencoder trained on defect-free weld radiographs flags porosity, cracks and lack of penetration by their reconstruction error, as a quality check for structural steel.
 
-## ▶ The app: [hackathon-team1-weld-anomaly.onrender.com](https://hackathon-team1-weld-anomaly.onrender.com)
+## ▶ The app: NEURAL / LAB, in two parts
 
-**NEURAL / LAB, exploring the black box.** Our trained model runs live in your browser:
+| Part | Address | For |
+|---|---|---|
+| **NEURAL / LAB · Inspect** | **[hackathon-team1-weld-app.pages.dev](https://hackathon-team1-weld-app.pages.dev)** (Cloudflare, team password) | **Use** the model: upload a weld X-ray, get LOW / CHECK / HIGH and the error map; every check is saved (D1 + R2). See [03_app/](03_app/) |
+| **NEURAL / LAB · Look inside** | **[hackathon-team1-weld-anomaly.onrender.com](https://hackathon-team1-weld-anomaly.onrender.com)** (Render, public) | **Understand** the model: draw defects and look inside the network |
+
+**NEURAL / LAB · Look inside, exploring the black box.** Our trained model runs live in your browser:
 - **Defect experiment:** draw a pore, crack or band on a real weld X-ray and watch the score, the risk level (LOW / CHECK / HIGH) and the error heatmap react as you draw.
 - **Architecture:** follow one weld through the encoder, the 32-number code and the decoder.
 - **Latent universe:** all 3,019 test welds as points in the model's latent space.
@@ -23,9 +28,9 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 | Part | Link |
 |---|---|
 | Model on Hugging Face | [iaac-maai/hackathon-team1-weld-anomaly-ae](https://huggingface.co/iaac-maai/hackathon-team1-weld-anomaly-ae) |
-| **The app: NEURAL / LAB** | **[hackathon-team1-weld-anomaly.onrender.com](https://hackathon-team1-weld-anomaly.onrender.com)**: draw a defect on a real weld X-ray and watch the network react (sleeps after 15 min idle; first visit ~1 min) |
+| **NEURAL / LAB · Look inside** | **[hackathon-team1-weld-anomaly.onrender.com](https://hackathon-team1-weld-anomaly.onrender.com)**: draw a defect on a real weld X-ray and watch the network react (sleeps after 15 min idle; first visit ~1 min) |
 | Model API (`/predict`) | `https://hackathon-team1-weld-anomaly.onrender.com/gradio`: for programs and the Cloudflare app |
-| **Weld X-ray Check** (Cloudflare Pages) | **[hackathon-team1-weld-app.pages.dev](https://hackathon-team1-weld-app.pages.dev)**: upload a weld X-ray, get the risk level and the error map; results saved in D1 and R2. Password in the course hand-in |
+| **NEURAL / LAB · Inspect** (Cloudflare Pages) | **[hackathon-team1-weld-app.pages.dev](https://hackathon-team1-weld-app.pages.dev)**: upload a weld X-ray, get the risk level and the error map; results saved in D1 and R2. Password in the course hand-in |
 | Impulse talk slides | [impulse/LINK.md](impulse/LINK.md) |
 
 ## Days

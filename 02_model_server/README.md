@@ -4,7 +4,7 @@ The model server of Team 1's hackathon project (AI Methods I, IAAC MaAI 2026/27)
 
 | Address | What |
 |---|---|
-| **https://hackathon-team1-weld-anomaly.onrender.com** | **NEURAL / LAB** (`neural_lab/`): draw a defect on a real weld and watch the network react live, the architecture, the latent universe, a 90-second demo. The model runs **in the browser** |
+| **https://hackathon-team1-weld-anomaly.onrender.com** | **NEURAL / LAB · Look inside** (`neural_lab/`): draw a defect on a real weld and watch the network react live, the architecture, the latent universe, a 90-second demo. The model runs **in the browser** |
 | **…/gradio** + `/predict` API | **API only, for programs:** send an image, get JSON back (no page for people any more; the app is NEURAL / LAB). The Cloudflare web app uses it (`MODEL_URL` = `https://hackathon-team1-weld-anomaly.onrender.com/gradio`) |
 
 Free Render service: it sleeps after 15 minutes without requests, and the first request then takes about a minute.
