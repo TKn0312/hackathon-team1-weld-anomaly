@@ -29,14 +29,26 @@ The app has one shared team password. It is given in the course hand-in, **not**
 
 ## Diagrams
 
-In [`diagrams/`](diagrams) and on our Miro board:
+On our Miro board, exported in two sets:
 
-- [2 user stories](diagrams/user_stories.png) (the inspector, the engineer)
-- [1 system diagram](diagrams/system.png)
-- [the D1 table with example rows](diagrams/d1_table.png)
-- 3 sequence diagrams: [checking a weld](diagrams/sequence_1_check_a_weld.png), [looking inside the network](diagrams/sequence_2_look_inside.png), [the wake-up](diagrams/sequence_3_wake_up.png)
+| | [1 · Before the app](diagrams/1_before_the_app) (the design) | [2 · After the app](diagrams/2_after_the_app) (what we built) |
+|---|---|---|
+| 2 user stories (the inspector, the engineer) | [user stories](diagrams/1_before_the_app/user_stories.png) | same stories |
+| System diagram | [system](diagrams/1_before_the_app/system.png) | [system](diagrams/2_after_the_app/system.png) |
+| D1 table | [example rows](diagrams/1_before_the_app/d1_table.png) | [real columns](diagrams/2_after_the_app/d1_table.png) |
+| Sequence: check a weld (story 1) | [check a weld](diagrams/1_before_the_app/sequence_1_check_a_weld.png) | [step by step](diagrams/2_after_the_app/sequence_1_check_a_weld.png) |
+| Sequence: look inside the network (story 2) | [look inside](diagrams/1_before_the_app/sequence_2_look_inside.png) | [step by step](diagrams/2_after_the_app/sequence_2_look_inside.png) |
+| Sequence: the wake-up | [wake-up](diagrams/1_before_the_app/sequence_3_wake_up.png) | [step by step](diagrams/2_after_the_app/sequence_3_wake_up.png) |
 
-![System diagram](diagrams/system.png)
+The "after" diagrams mark in **green** what was added or changed while building.
+
+**Before (the design):**
+
+![System diagram, before the app](diagrams/1_before_the_app/system.png)
+
+**After (the app we built):**
+
+![System diagram, after the app](diagrams/2_after_the_app/system.png)
 
 ## Our diagrams compared with the app we built
 
