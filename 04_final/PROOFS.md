@@ -49,7 +49,7 @@ The `MODEL_URL` line in [`03_app/wrangler.toml`](../03_app/wrangler.toml):
 MODEL_URL = "https://hackathon-team1-weld-anomaly.onrender.com/gradio"
 ```
 
-A live result in the app (checked through our model server on Render):
+A live result in the app (checked through our model server on Render): a lack-of-penetration tile scores **HIGH** (0.006339, above HIGH at 0.001442), and the error heat map lights up along the defect:
 
 ![A live result in the app](screenshots/3_live_result.png)
 
@@ -74,8 +74,16 @@ The account passwords are never stored anywhere: D1 keeps only a salted PBKDF2 h
 
 The login page asks for the team password, a username and the user's own password, with **Log in** and **Create account**:
 
+**Sign up:** the login page, with the team password, a username, the user's own password and **Create account**:
+
 ![Sign up](screenshots/5a_sign_up.png)
+
+**Logged in:** "Logged in as sahilk" at the top right; a new account starts with no checks of its own ("No checks yet"):
+
 ![Logged in](screenshots/5b_logged_in.png)
+
+**Logged out:** after **Log out**, the browser is back on the login page:
+
 ![Logged out](screenshots/5c_logged_out.png)
 
 The same, run against the live app with two test accounts (`test_a`, `test_b`; their passwords are in the course hand-in, not here):
