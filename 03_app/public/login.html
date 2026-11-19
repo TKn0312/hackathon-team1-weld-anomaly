@@ -12,17 +12,37 @@
   <div class="login">
     <p class="wm">NEURAL <i>/</i> LAB · Inspect</p>
     <h1>Screen a weld X-ray, see where to look.</h1>
-    <p class="muted">This app is private. Enter the team password.</p>
+    <p class="muted">This app is private. Enter the team password, then log in with your own account, or create one.
+      You only see your own checks.</p>
     <form method="post" action="/api/login">
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" required autofocus>
-      <button class="primary" type="submit">Log in</button>
+      <label for="team_password">Team password</label>
+      <input id="team_password" name="team_password" type="password" required autofocus autocomplete="off">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_.\-]{3,32}"
+             autocomplete="username" autocapitalize="none" spellcheck="false">
+      <p class="hint">3–32 characters: letters, numbers, _ . -</p>
+      <label for="password">Your password</label>
+      <input id="password" name="password" type="password" required minlength="8" maxlength="200" autocomplete="current-password">
+      <p class="hint">At least 8 characters</p>
+      <div class="switch">
+        <button class="primary" type="submit" name="mode" value="login">Log in</button>
+        <button type="submit" name="mode" value="signup">Create account</button>
+      </div>
     </form>
-    <p id="wrong" class="error-text" hidden style="margin-top: 14px">Wrong password. Try again.</p>
+    <p id="error" class="error-text" hidden style="margin-top: 14px"></p>
   </div>
   <script>
-    if (new URLSearchParams(location.search).has("wrong")) {
-      document.getElementById("wrong").hidden = false;
+    const MESSAGES = {
+      team: "Wrong team password. Try again.",
+      wrong: "Wrong username or password.",
+      taken: "This username is already taken. Choose another one, or log in.",
+      invalid: "Username: 3–32 letters, numbers, _ . -   Password: at least 8 characters.",
+    };
+    const code = new URLSearchParams(location.search).get("error");
+    if (MESSAGES[code]) {
+      const el = document.getElementById("error");
+      el.textContent = MESSAGES[code];
+      el.hidden = false;
     }
   </script>
 </body>

@@ -4,8 +4,13 @@
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;   // the ids we create (crypto.randomUUID)
 const IMAGE_TYPES = ["image/png", "image/jpeg"];
 
-export async function onRequestGet({ params, request, env }) {
+export async function onRequestGet({ params, request, env, data }) {
   if (!ID.test(params.id)) {
+    return new Response("Not found", { status: 404 });
+  }
+  // Own data only: the image must belong to a check of the logged-in user (same answer as "does not exist")
+  const own = await env.DB.prepare("SELECT 1 FROM predictions WHERE id = ? AND user_id = ?").bind(params.id, data.userId).first();
+  if (!own) {
     return new Response("Not found", { status: 404 });
   }
   const kind = new URL(request.url).searchParams.get("kind");

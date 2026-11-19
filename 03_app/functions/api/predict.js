@@ -6,7 +6,7 @@
 import { isAwake } from "./status.js";
 import { labUrl } from "../../lib/share.js";
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, data }) {
   const form = await request.formData();
   const file = form.get("image");
   if (!file || typeof file === "string") {
@@ -51,10 +51,10 @@ export async function onRequestPost({ request, env }) {
   // 3. Store one row in D1. The "?" placeholders keep user input out of the SQL text
   const createdAt = new Date().toISOString();
   await env.DB.prepare(
-    "INSERT INTO predictions (id, created_at, image_key, file_name, score, threshold, is_anomaly, risk_level, score_vs_threshold) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO predictions (id, created_at, image_key, file_name, score, threshold, is_anomaly, risk_level, score_vs_threshold, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
   )
     .bind(id, createdAt, imageKey, file.name || null, result.score, result.threshold, result.is_anomaly ? 1 : 0,
-          result.risk_level, result.score_vs_threshold)
+          result.risk_level, result.score_vs_threshold, data.userId)   // whose check this is (from the session cookie)
     .run();
 
   // 4. Answer the page, with a signed link that opens this X-ray in NEURAL / LAB · Look inside

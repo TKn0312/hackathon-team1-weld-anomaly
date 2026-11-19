@@ -137,3 +137,9 @@ input[type="password"]:focus { border-color: var(--accent); }
   .images figure:first-child { grid-column: span 2; }
   .hide-sm { display: none; }
 }
+
+/* Logged in as … + Log out */
+.account { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+.login .switch { display: flex; gap: 10px; }
+.login .switch button { flex: 1; justify-content: center; }
+.login .hint { font-size: 12px; color: var(--muted); margin: -6px 0 0; }

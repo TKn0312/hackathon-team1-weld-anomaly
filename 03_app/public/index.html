@@ -12,7 +12,7 @@
   <main>
     <header class="topbar">
       <p class="wm">NEURAL <i>/</i> LAB · Inspect</p>
-      <form method="post" action="/api/logout"><button type="submit">Log out</button></form>
+      <form method="post" action="/api/logout" class="account"><span id="who" class="muted"></span><button type="submit">Log out</button></form>
     </header>
     <p class="intro">Upload an X-ray tile of a weld. Our model learned only from good welds and tries to redraw yours:
       where it can't, the error map lights up. That's where to look.</p>
@@ -283,6 +283,8 @@
     }
 
     loadHistory();
+    // "Logged in as …": textContent, so a username can't inject HTML
+    fetch("/api/me").then((r) => r.ok ? r.json() : null).then((me) => { if (me) $("who").textContent = `Logged in as ${me.username}`; }).catch(() => {});
   </script>
 </body>
 </html>

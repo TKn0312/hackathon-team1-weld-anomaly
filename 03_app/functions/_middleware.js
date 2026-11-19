@@ -1,5 +1,7 @@
-// Runs before EVERY request: the password gate.
-// A visitor without the right cookie only gets the login page and the login API.
+// Runs before EVERY request: the login gate.
+// A visitor without a valid session cookie only gets the login page and the login API.
+// The session cookie names ONE user (see lib/users.js); the functions use it to show only that user's data.
+import { userFromCookie } from "../lib/users.js";
 
 // Pages serves login.html at /login (it drops the .html)
 const PUBLIC_PATHS = ["/login", "/login.html", "/api/login", "/style.css"];
@@ -16,21 +18,14 @@ export async function onRequest(context) {
     return next();
   }
 
-  const cookie = request.headers.get("Cookie") || "";
-  const token = cookie.match(/(?:^|;\s*)auth=([a-f0-9]+)/)?.[1];
-  if (token && token === (await authToken(env.APP_PASSWORD))) {
-    return next(); // logged in: serve the page or run the API function
+  const userId = await userFromCookie(env, request.headers.get("Cookie"));
+  if (userId) {
+    context.data.userId = userId;   // logged in: the functions read it as data.userId
+    return next();
   }
 
   if (url.pathname.startsWith("/api/")) {
     return Response.json({ error: "Not logged in" }, { status: 401 });
   }
   return Response.redirect(new URL("/login", url), 302);
-}
-
-// The cookie stores a hash of the password, never the password itself
-export async function authToken(password) {
-  const bytes = new TextEncoder().encode(`hackathon:${password}`);
-  const hash = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
