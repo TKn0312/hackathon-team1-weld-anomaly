@@ -9,7 +9,7 @@
 | Part | Address | For |
 |---|---|---|
 | **NEURAL / LAB · Inspect** | **[hackathon-team1-weld-app.pages.dev](https://hackathon-team1-weld-app.pages.dev)** (Cloudflare, team password) | **Use** the model: upload a weld X-ray, get LOW / CHECK / HIGH and the error map; every check is saved (D1 + R2). See [03_app/](03_app/) |
-| **NEURAL / LAB · Look inside** | **[hackathon-team1-weld-anomaly.onrender.com](https://hackathon-team1-weld-anomaly.onrender.com)** (Render, public) | **Understand** the model: draw defects and look inside the network |
+| **NEURAL / LAB · Look inside** | **[hackathon-team1-weld-anomaly.onrender.com](https://hackathon-team1-weld-anomaly.onrender.com)** (Render, public) | **Understand** the model: draw defects and look inside the network. "Look inside the network →" in Inspect opens it with the same X-ray (a signed link to it in R2) |
 
 **NEURAL / LAB · Look inside, exploring the black box.** Our trained model runs live in your browser:
 - **Defect experiment:** draw a pore, crack or band on a real weld X-ray and watch the score, the risk level (LOW / CHECK / HIGH) and the error heatmap react as you draw.
