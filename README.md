@@ -6,9 +6,11 @@
 
 ## ▶ The app: NEURAL / LAB, in two parts
 
+**Final submission: [04_final/README.md](04_final/README.md)** (use case, live URLs, diagrams, the three statements, limitations) and [04_final/PROOFS.md](04_final/PROOFS.md).
+
 | Part | Address | For |
 |---|---|---|
-| **NEURAL / LAB · Inspect** | **[hackathon-team1-weld-app.pages.dev](https://hackathon-team1-weld-app.pages.dev)** (Cloudflare, team password) | **Use** the model: upload a weld X-ray, get LOW / CHECK / HIGH and the error map; every check is saved (D1 + R2). See [03_app/](03_app/) |
+| **NEURAL / LAB · Inspect** | **[hackathon-team1-weld-app.pages.dev](https://hackathon-team1-weld-app.pages.dev)** (Cloudflare, team password + your own account) | **Use** the model: upload a weld X-ray, get LOW / CHECK / HIGH and the error map; every check is saved (D1 + R2), and each user sees only their own. See [03_app/](03_app/) |
 | **NEURAL / LAB · Look inside** | **[hackathon-team1-weld-anomaly.onrender.com](https://hackathon-team1-weld-anomaly.onrender.com)** (Render, public) | **Understand** the model: draw defects and look inside the network. "Look inside the network →" in Inspect opens it with the same X-ray (a signed link to it in R2) |
 
 **NEURAL / LAB · Look inside, exploring the black box.** Our trained model runs live in your browser:
@@ -40,7 +42,7 @@ Setup, data download and the team's git workflow: see [CONTRIBUTING.md](CONTRIBU
 | Mon 16 Nov | [01_autoencoder/](01_autoencoder/) | done: model trained, compared, published on Hugging Face; Tuesday slides ready |
 | Tue 17 Nov | [02_model_server/](02_model_server/) · [neural_lab/](neural_lab/) | done: Render serves NEURAL / LAB as the app, plus the `/predict` API |
 | Wed 18 Nov | [03_app/](03_app/) | done: app live on Cloudflare (password, our Render API, D1 + R2), user stories and diagrams |
-| Thu 19 Nov | `04_final/` | |
+| Thu 19 Nov | [04_final/](04_final/) | final app with user accounts; diagrams, proofs and the three statements: **[04_final/README.md](04_final/README.md)** |
 
 ## Results so far (Monday)
 
