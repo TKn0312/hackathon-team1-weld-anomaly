@@ -54,6 +54,20 @@ Every arrow is in the code (checked against `03_app/functions/`, `03_app/public/
 
 ![Sequence diagram](diagrams/3_sequence.png)
 
+**More diagrams:**
+
+What is stored where (D1 tables and R2 files):
+
+![What gets stored where](diagrams/4_data_d1_r2.png)
+
+Sequence: "Look inside" opens the same X-ray through the signed link:
+
+![Sequence: look inside](diagrams/5_sequence_look_inside.png)
+
+Sequence: the model server is asleep:
+
+![Sequence: sleeping model](diagrams/6_sequence_wake_up.png)
+
 The design before building and the first version after building are in [`03_app/diagrams/`](../03_app/diagrams/).
 
 ## Three statements
