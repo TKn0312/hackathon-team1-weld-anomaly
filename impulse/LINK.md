@@ -2,7 +2,7 @@
 
 **Topic:** Latent Space: *How does AI know two buildings look alike? When buildings become numbers* (understanding latent space through architectural visual search)
 **Day:** Tuesday 17 November 2026
-**Slides (Google Slides, anyone with the link can view):** _link to be added_
+**Slides (Google Slides, anyone with the link can view):** https://docs.google.com/presentation/d/109lvBtwZO-syQzukYkceIbkNtaKl2TnJE4GAtRkwQx4/view
 **Slides (PDF, in this repository):** [latent_space_impulse_slides.pdf](latent_space_impulse_slides.pdf), 5 slides
 
 | # | Slide | What it shows |
