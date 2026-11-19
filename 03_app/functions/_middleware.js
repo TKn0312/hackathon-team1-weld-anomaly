@@ -11,6 +11,10 @@ export async function onRequest(context) {
   if (PUBLIC_PATHS.includes(url.pathname)) {
     return next();
   }
+  // Signed one-image links for NEURAL / LAB: no cookie, but the function itself checks the signature
+  if (url.pathname.startsWith("/api/shared/")) {
+    return next();
+  }
 
   const cookie = request.headers.get("Cookie") || "";
   const token = cookie.match(/(?:^|;\s*)auth=([a-f0-9]+)/)?.[1];

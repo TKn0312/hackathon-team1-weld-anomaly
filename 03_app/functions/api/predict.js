@@ -4,6 +4,7 @@
 // If the model server on Render is asleep or starting (no answer in time, or 502/503/504), we answer
 // { waking: true } with status 503: the page then shows "Model is waking up, about 1 minute…" and retries.
 import { isAwake } from "./status.js";
+import { labUrl } from "../../lib/share.js";
 
 export async function onRequestPost({ request, env }) {
   const form = await request.formData();
@@ -56,8 +57,9 @@ export async function onRequestPost({ request, env }) {
           result.risk_level, result.score_vs_threshold)
     .run();
 
-  // 4. Answer the page
-  return Response.json({ id, created_at: createdAt, ...result });
+  // 4. Answer the page, with a signed link that opens this X-ray in NEURAL / LAB · Look inside
+  const lab_url = await labUrl(env, new URL(request.url).origin, id);
+  return Response.json({ id, created_at: createdAt, lab_url, ...result });
 }
 
 const waking = () => Response.json({ waking: true }, { status: 503 });

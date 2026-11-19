@@ -17,7 +17,7 @@ The app has one shared team password. It is given in the course hand-in, **not**
 | Part | Service | What it does |
 |---|---|---|
 | **Page** | Cloudflare Pages (`public/`) | Plain HTML, CSS and JavaScript: the login page, upload, result and recent checks |
-| **Worker** | Pages Functions (`functions/`) | `_middleware.js` checks the login cookie on every request. `/api/login`, `/api/logout`, `/api/predict` (checks the file, calls the model, saves the result), `/api/history` (last 20 checks), `/api/images/{id}` (an image from R2), `/api/status` (is Render awake?) |
+| **Worker** | Pages Functions (`functions/`) | `_middleware.js` checks the login cookie on every request. `/api/login`, `/api/logout`, `/api/predict` (checks the file, calls the model, saves the result), `/api/history` (last 20 checks), `/api/images/{id}` (an image from R2), `/api/status` (is Render awake?), `/api/shared/{id}` (one X-ray for NEURAL / LAB, with a signed link instead of the cookie) |
 | **Model server** | Render | Our FastAPI + Gradio server (`02_model_server/`). The Worker calls its `/predict` API at `MODEL_URL` with the image as base64 and gets back the score, risk level, redraw and error map |
 | **Database** | Cloudflare D1 (`hackathon-team1-weld-db`) | Table `predictions`: one row per check (`id`, `created_at`, `file_name`, `score`, `threshold`, `is_anomaly`, `risk_level`, `score_vs_threshold`, `image_key`). See `schema.sql` |
 | **File storage** | Cloudflare R2 (`hackathon-team1-weld-images`) | The uploaded X-ray (`uploads/{id}`) and its error heat map (`errors/{id}`). D1 keeps the key; R2 keeps the file |
@@ -53,7 +53,7 @@ The "after" diagrams mark in **green** what was added or changed while building.
 ## Our diagrams compared with the app we built
 
 - **Story 1 (inspect and save) matches the app:** upload → model → R2 + D1 → result, and the history comes back from D1 after a reload.
-- **Story 2 (look inside the network) only partly matches:** the button opens NEURAL / LAB, but the flagged weld is not passed along, so the engineer uploads it again there. The two apps run on different services (Cloudflare and Render) and do not share files.
+- **Story 2 (look inside the network) now matches, through R2:** at first the button only opened NEURAL / LAB, and the engineer had to upload the weld again. Now the Worker adds a **signed link** to the X-ray in R2 (`/api/shared/{id}?exp=…&sig=…`, valid 24 h) to the button. The lab on Render downloads that one image and opens it in the Architecture room. The link works without the password but only for that image: the signature is made with a key derived from `APP_PASSWORD`, so changing the id or the expiry breaks it. The lab only follows links to our Cloudflare app.
 - **Pages, not Workers:** the brief allows both and says Cloudflare now recommends Workers for new projects; we used Cloudflare Pages + Pages Functions (the class example), which do the same job.
 - **The wake-up needed more than a simple retry:** the Worker first asks Render whether it is awake, and the page keeps one long "are you up?" request open while it retries every 10 s, because the first answer after a restart took about 47 s.
 - **Saved checks show two images, not three:** the redraw is not stored in R2, only the X-ray and the error map.

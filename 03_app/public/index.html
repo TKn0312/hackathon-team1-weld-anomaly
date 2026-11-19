@@ -65,7 +65,7 @@
 
           <div class="result-foot">
             <p class="note">A screening aid, not a verdict: a qualified inspector decides.</p>
-            <a class="btn link-accent" href="https://hackathon-team1-weld-anomaly.onrender.com/#architecture" target="_blank" rel="noopener">Look inside the network →</a>
+            <a class="btn link-accent" id="lab-link" href="https://hackathon-team1-weld-anomaly.onrender.com/#architecture" target="_blank" rel="noopener">Look inside the network →</a>
           </div>
         </div>
       </section>
@@ -190,6 +190,10 @@
 
     // ---- Showing a result: a new check (with the file) or a saved one (from Recent checks) ----
     function showResult(r) {
+      // "Look inside the network →" opens NEURAL / LAB with THIS X-ray (a signed link to it in R2, made by the Worker)
+      const lab = r.lab_url || "";
+      $("lab-link").href = lab.startsWith("https://hackathon-team1-weld-anomaly.onrender.com/")
+        ? lab : "https://hackathon-team1-weld-anomaly.onrender.com/#architecture";
       const level = levelOf(r.risk_level, r.score);
       const tLow = r.t_low || T_LOW, tHigh = r.t_high || T_HIGH;
 

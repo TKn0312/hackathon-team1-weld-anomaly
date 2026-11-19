@@ -416,6 +416,22 @@ function go(room) {
     if (room === "universe") Universe.show();
   }
 }
+// Opened from NEURAL / LAB · Inspect (Cloudflare) with ?weld=<signed link to the X-ray in R2>: load that same X-ray.
+// Only links to our Cloudflare app's /api/shared/ are followed; the link itself expires after 24 h.
+async function loadFromInspect(st) {
+  const link = new URLSearchParams(location.search).get("weld");
+  if (!link) return;
+  let u; try { u = new URL(link); } catch { return; }
+  const ours = (u.protocol === "https:" && (u.hostname === "hackathon-team1-weld-app.pages.dev" || u.hostname.endsWith(".hackathon-team1-weld-app.pages.dev")))
+            || ["localhost", "127.0.0.1"].includes(u.hostname);
+  if (!ours || !u.pathname.startsWith("/api/shared/")) return;
+  try {
+    const r = await fetch(u, { credentials: "omit" });
+    if (!r.ok) throw new Error(r.status === 404 ? "the link has expired, please upload the X-ray" : `status ${r.status}`);
+    await NL.loadFile(await r.blob());
+    document.getElementById("tileInfo").textContent = "Working on: the X-ray you checked in NEURAL / LAB · Inspect";
+  } catch (err) { st.textContent = "Could not load the X-ray from Inspect: " + err.message; }
+}
 (async () => {
   const st = document.getElementById("status");
   try {
@@ -441,6 +457,7 @@ function go(room) {
     document.getElementById("demoStop").onclick = () => Demo.stop();
     const start = cfg.catalogue.find(t => t.label === "no_defect" && t.pick === "median");
     sel.value = start.id; await NL.loadTest(start.id);
+    await loadFromInspect(st);
     go(location.hash.slice(1) || "defect");
   } catch (err) { st.textContent = "Error: " + err.message; console.error(err); }
 })();
