@@ -70,6 +70,10 @@ Sequence: the model server is asleep:
 
 The design before building and the first version after building are in [`03_app/diagrams/`](../03_app/diagrams/).
 
+## Presentation
+
+The finals deck (11 slides, in the order the teachers asked for): [`presentation/NEURAL_LAB_finals_presentation_team1.pdf`](presentation/NEURAL_LAB_finals_presentation_team1.pdf). The figures made for the slides (the model figure and wider versions of diagrams 1–3, with transparent backgrounds) are in [`presentation/slide_images/`](presentation/slide_images/).
+
 ## Three statements
 
 > ✍️ **Written by the team**, not by the AI.
