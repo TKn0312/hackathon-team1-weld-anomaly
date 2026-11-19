@@ -72,19 +72,23 @@ The design before building and the first version after building are in [`03_app/
 
 ## Three statements
 
-> ✍️ **Written by the team.** (To be filled in by us: these are ours, not the AI's.)
+> ✍️ **Written by the team**, not by the AI.
 
-**What is clear:**
+### 1. What is clear?
 
-_…_
+We understand how an autoencoder can identify unusual patterns by learning to reconstruct defect-free welds. We successfully connected our trained model to a deployed application, linking Hugging Face, Render, Cloudflare, D1 and R2 into one workflow. Building NEURAL / LAB also helped us understand what happens inside the network, from convolutional feature maps to the 32-dimensional latent representation. We learned that a working AI product requires much more than a trained model: data preparation, backend communication, authentication, storage and user experience all need to work together.
 
-**What is still unclear:**
+### 2. What is still unclear?
 
-_…_
+Although our model achieved promising results on the RIAWELC dataset, we do not yet know how reliably it would perform on X-rays captured using different equipment or in real construction environments. We also cannot confidently explain what each individual latent neuron represents, even though we can observe how changing its value affects the reconstruction. Our synthetic defect experiments demonstrate the model's sensitivity, but they do not fully represent real radiographic defects. The error heatmaps highlight reconstruction differences, but we have not validated their accuracy for precise defect localisation.
 
-**What we would do next:**
+### 3. What would we do next?
 
-_…_
+**First**, expand the dataset with radiographs from different welding processes and inspection environments to test generalisation.
+
+**Second**, investigate the neural network's behaviour more deeply through controlled experiments, comparing different autoencoder architectures and measuring how reliably reconstruction errors correspond to actual defect locations.
+
+**Third**, develop NEURAL / LAB into a more practical inspection tool by supporting full-size radiographs, improving the review workflow and allowing qualified inspectors to provide feedback on predictions.
 
 ## Limitations
 
