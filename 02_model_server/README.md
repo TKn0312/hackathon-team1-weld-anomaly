@@ -87,6 +87,7 @@ python app.py                    # then open http://127.0.0.1:7860
 | `app.py` | Loading the model, the preprocessing, the page and the `/predict` API |
 | `anomaly_ae.onnx` | The model (architecture and weights) |
 | `config.json` | Image size, preprocessing, thresholds and risk levels, results |
+| `call_api.ipynb` | Calls the API on Render (plain HTTP, two steps, standard library only) for one tile per class and prints the results, saved with its outputs |
 | `call_server.py` | Wakes the server and calls it with `gradio_client` and with plain HTTP |
 | `requirements.txt`, `.python-version` | What Render installs: Gradio and ONNX Runtime, Python 3.12, no PyTorch |
 | `render.yaml` | Render settings from the course template (our service was set up in the Render dashboard: root directory `02_model_server`, start command `python app.py`) |
